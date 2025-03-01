@@ -1,6 +1,9 @@
 package net.turtleboi.aspects;
 
 import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.level.block.Blocks;
+import net.turtleboi.aspects.block.ModBlocks;
+import net.turtleboi.aspects.item.ModCreativeModeTabs;
 import net.turtleboi.aspects.item.ModItems;
 import org.slf4j.Logger;
 
@@ -30,6 +33,8 @@ public class Aspects {
         NeoForge.EVENT_BUS.register(this);
 
         ModItems.register(modEventBus);
+        ModBlocks.register(modEventBus);
+        ModCreativeModeTabs.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
 
