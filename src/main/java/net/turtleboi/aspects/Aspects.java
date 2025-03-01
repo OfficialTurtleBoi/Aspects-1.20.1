@@ -3,6 +3,7 @@ package net.turtleboi.aspects;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.block.Blocks;
 import net.turtleboi.aspects.block.ModBlocks;
+import net.turtleboi.aspects.component.ModDataComponents;
 import net.turtleboi.aspects.item.ModCreativeModeTabs;
 import net.turtleboi.aspects.item.ModItems;
 import org.slf4j.Logger;
@@ -35,6 +36,8 @@ public class Aspects {
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
+
+        ModDataComponents.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
 
