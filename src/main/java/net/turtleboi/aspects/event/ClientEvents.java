@@ -21,14 +21,14 @@ public class ClientEvents {
         String aspect = AspectHelper.getAspect(stack);
 
         if (aspect != null) {
-            Component aspectLine = Component.translatable("aspect.aspects."+aspect)
+            Component aspectLine = Component.translatable("aspect.aspects." + aspect)
                     .withStyle(ChatFormatting.GOLD);
             event.getToolTip().add(aspectLine);
             Component aspectLineAlt = Component.translatable("aspectinfo.aspects.alt_info")
                     .withStyle(ChatFormatting.BLUE);
 
             if (isAltKeyDown()){
-                aspectLineAlt = Component.translatable("aspectinfo.aspects."+aspect)
+                aspectLineAlt = Component.translatable("aspectinfo.aspects." + aspect)
                         .withStyle(ChatFormatting.YELLOW);
             }
             event.getToolTip().add(aspectLineAlt);
