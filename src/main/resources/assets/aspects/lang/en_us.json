@@ -6,5 +6,22 @@
   "item.aspects.arcani_rune": "Arcani Rune",
   "item.aspects.umbre_rune": "Umbre Rune",
 
-  "creativetab.aspects.aspects_tab": "Aspects"
+  "creativetab.aspects.aspects_tab": "Aspects",
+  "aspect.aspects.infernum": "Infernum",
+  "aspect.aspects.glacius": "Glacius",
+  "aspect.aspects.terra": "Terra",
+  "aspect.aspects.tempestas": "Tempestas",
+  "aspect.aspects.arcani": "Arcani",
+  "aspect.aspects.umbre": "Umbre",
+
+  "aspectinfo.aspects.infernum": "- Makes so fire deals more damage. Near enemies will be ignited",
+  "aspectinfo.aspects.glacius": "Glacius",
+  "aspectinfo.aspects.terra": "Terra",
+  "aspectinfo.aspects.tempestas": "Tempestas",
+  "aspectinfo.aspects.arcani": "Arcani",
+  "aspectinfo.aspects.umbre": "Umbre",
+
+  "aspectinfo.aspects.alt_info": "Hold alt for more information"
+
+
 }

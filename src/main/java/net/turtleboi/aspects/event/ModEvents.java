@@ -1,6 +1,10 @@
 package net.turtleboi.aspects.event;
 
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -15,15 +19,34 @@ public class ModEvents {
     public static void onAnvilUpdate(AnvilUpdateEvent event) {
         ItemStack left = event.getLeft();
         ItemStack right = event.getRight();
+        String name = event.getName();
+        int i = 5;
 
-        if (isRune(right)) {
+
+        if ((isRune(right)) && (left.getItem() instanceof ArmorItem)) {
+            ItemStack output = left.copy();
+
+            if (name != null && !StringUtil.isBlank(name)) {
+                if (!name.equals(left.getHoverName().getString())) {
+                    i += 1;
+
+                    output.set(DataComponents.CUSTOM_NAME, Component.literal(name));
+                }
+            }else if (left.has(DataComponents.CUSTOM_NAME)) {
+
+                i += 1;
+                output.remove(DataComponents.CUSTOM_NAME);
+
+            }
+
             String aspectData = AspectHelper.getAspect(right);
             if (aspectData == null) {
-                ItemStack output = left.copy();
                 String runeAspect = AspectHelper.getAspectFromRune(right);
                 AspectHelper.setAspect(output, runeAspect);
+
+                event.setMaterialCost(1);
                 event.setOutput(output);
-                event.setCost(1);
+                event.setCost(i);
             }
         }
     }

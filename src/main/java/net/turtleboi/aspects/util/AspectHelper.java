@@ -5,12 +5,12 @@ import net.turtleboi.aspects.component.ModDataComponents;
 import net.turtleboi.aspects.item.ModItems;
 
 public class AspectHelper {
-    public static String INFERNUM_ASPECT = "Infernum";
-    public static String GLACIUS_ASPECT = "Glacius";
-    public static String TERRA_ASPECT = "Terra";
-    public static String TEMPESTAS_ASPECT = "Tempestas";
-    public static String ARCANI_ASPECT = "Arcani";
-    public static String UMBRE_ASPECT = "Umbre";
+    public static String INFERNUM_ASPECT = "infernum";
+    public static String GLACIUS_ASPECT = "glacius";
+    public static String TERRA_ASPECT = "terra";
+    public static String TEMPESTAS_ASPECT = "tempestas";
+    public static String ARCANI_ASPECT = "arcani";
+    public static String UMBRE_ASPECT = "umbre";
 
     public static void setAspect(ItemStack stack, String aspectName) {
         stack.set(ModDataComponents.ASPECT_STRING, aspectName);
