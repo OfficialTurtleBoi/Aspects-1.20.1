@@ -1,11 +1,11 @@
 package net.turtleboi.aspects;
 
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.level.block.Blocks;
 import net.turtleboi.aspects.block.ModBlocks;
 import net.turtleboi.aspects.component.ModDataComponents;
 import net.turtleboi.aspects.item.ModCreativeModeTabs;
 import net.turtleboi.aspects.item.ModItems;
+import net.turtleboi.aspects.util.ModAttributes;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -23,9 +23,9 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
-@Mod(Aspects.MODID)
+@Mod(Aspects.MOD_ID)
 public class Aspects {
-    public static final String MODID = "aspects";
+    public static final String MOD_ID = "aspects";
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public Aspects(IEventBus modEventBus, ModContainer modContainer) {
@@ -38,6 +38,7 @@ public class Aspects {
         ModCreativeModeTabs.register(modEventBus);
 
         ModDataComponents.register(modEventBus);
+        ModAttributes.REGISTRY.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
 
@@ -64,7 +65,7 @@ public class Aspects {
 
     }
 
-    @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {

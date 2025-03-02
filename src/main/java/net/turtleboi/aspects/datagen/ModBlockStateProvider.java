@@ -9,7 +9,7 @@ import net.turtleboi.aspects.block.ModBlocks;
 
 public class ModBlockStateProvider extends BlockStateProvider {
     public ModBlockStateProvider(PackOutput output, ExistingFileHelper exFileHelper) {
-        super(output, Aspects.MODID, exFileHelper);
+        super(output, Aspects.MOD_ID, exFileHelper);
     }
 
     @Override

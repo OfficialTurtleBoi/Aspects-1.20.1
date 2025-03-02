@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 
 public class ModBlocks {
     public static final DeferredRegister.Blocks BLOCKS =
-            DeferredRegister.createBlocks(Aspects.MODID);
+            DeferredRegister.createBlocks(Aspects.MOD_ID);
 
     public static final DeferredBlock<Block> RUNE_BLOCK = registerBlock("rune_block",
             () -> new Block(BlockBehaviour.Properties.of()

@@ -8,13 +8,12 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.block.ModBlocks;
-import org.checkerframework.checker.units.qual.C;
 
 import java.util.function.Supplier;
 
 public class ModCreativeModeTabs {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TAB =
-            DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Aspects.MODID);
+            DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Aspects.MOD_ID);
 
     public static final Supplier<CreativeModeTab> ASPECTS_TAB = CREATIVE_MODE_TAB.register("aspects_tab",
             () -> CreativeModeTab.builder().icon(() -> new ItemStack(ModItems.INFERNUM_RUNE.get()))

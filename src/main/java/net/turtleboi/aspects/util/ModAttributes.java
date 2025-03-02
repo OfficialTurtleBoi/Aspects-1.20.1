@@ -12,11 +12,10 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.aspects.Aspects;
 
-@EventBusSubscriber(modid = Aspects.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Aspects.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public class ModAttributes {
     public static final DeferredRegister<Attribute> REGISTRY =
-            DeferredRegister.create(BuiltInRegistries.ATTRIBUTE, Aspects.MODID);
-
+            DeferredRegister.create(BuiltInRegistries.ATTRIBUTE, Aspects.MOD_ID);
 
     public static final DeferredHolder<Attribute, Attribute> INFERNUM_ASPECT =
             create("infernum_aspect", 0D, 0D);
@@ -37,7 +36,7 @@ public class ModAttributes {
             create("umbre_aspect", 0D, 0D);
 
     private static DeferredHolder<Attribute, Attribute> create(String name, double defaultValue, double minValue) {
-        String descriptionId = "attribute.name." + Aspects.MODID + "." + name;
+        String descriptionId = "attribute.name." + Aspects.MOD_ID + "." + name;
         return REGISTRY.register(name, () -> new RangedAttribute(descriptionId, defaultValue, minValue, 1024.0D)
                 .setSyncable(true));
     }

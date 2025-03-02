@@ -8,7 +8,7 @@ import net.turtleboi.aspects.item.ModItems;
 
 public class ModItemModelProvider extends ItemModelProvider {
     public ModItemModelProvider(PackOutput output, ExistingFileHelper existingFileHelper) {
-        super(output, Aspects.MODID, existingFileHelper);
+        super(output, Aspects.MOD_ID, existingFileHelper);
     }
 
     @Override

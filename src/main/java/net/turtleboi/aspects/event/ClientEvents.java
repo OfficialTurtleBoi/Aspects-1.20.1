@@ -1,37 +1,43 @@
 package net.turtleboi.aspects.event;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import net.minecraft.ChatFormatting;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.ArrowRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.ClientHooks;
+import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.turtleboi.aspects.Aspects;
-import net.turtleboi.aspects.util.AspectHelper;
+import net.turtleboi.aspects.client.renderer.FireAuraRenderer;
+import net.turtleboi.aspects.util.AspectUtil;
 
-@EventBusSubscriber(modid = Aspects.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Aspects.MOD_ID, value = Dist.CLIENT)
 public class ClientEvents {
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
-        String aspect = AspectHelper.getAspect(stack);
+        String aspect = AspectUtil.getAspect(stack);
 
         if (aspect != null) {
             Component aspectLine = Component.translatable("aspect.aspects." + aspect)
-                    .withStyle(ChatFormatting.GOLD);
+                    .withStyle(style -> style.withColor(AspectUtil.getAspectColor(aspect)));
             event.getToolTip().add(aspectLine);
-            Component aspectLineAlt = Component.translatable("aspectinfo.aspects.alt_info")
-                    .withStyle(ChatFormatting.BLUE);
-
-            if (isAltKeyDown()){
-                aspectLineAlt = Component.translatable("aspectinfo.aspects." + aspect)
-                        .withStyle(ChatFormatting.YELLOW);
-            }
-            event.getToolTip().add(aspectLineAlt);
+            //Component aspectLineAlt = Component.translatable("aspectinfo.aspects.alt_info")
+            //        .withStyle(ChatFormatting.BLUE);
+//
+            //if (isAltKeyDown()){
+            //    aspectLineAlt = Component.translatable("aspectinfo.aspects." + aspect)
+            //            .withStyle(ChatFormatting.YELLOW);
+            //}
+            //event.getToolTip().add(aspectLineAlt);
 
         }
     }
@@ -39,5 +45,14 @@ public class ClientEvents {
     private static boolean isAltKeyDown() {
         return InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_LALT) ||
                 InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_RALT);
+    }
+
+    @SubscribeEvent
+    public static void onRenderPlayerPost(RenderPlayerEvent.Post event) {
+        Player player = event.getEntity();
+        PoseStack poseStack = event.getPoseStack();
+        MultiBufferSource.BufferSource bufferSource = (MultiBufferSource.BufferSource) event.getMultiBufferSource();
+
+        FireAuraRenderer.renderAuras(bufferSource, poseStack, player, event.getPartialTick());
     }
 }

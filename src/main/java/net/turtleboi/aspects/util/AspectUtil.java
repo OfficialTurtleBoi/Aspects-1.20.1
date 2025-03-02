@@ -1,5 +1,6 @@
 package net.turtleboi.aspects.util;
 
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -13,7 +14,7 @@ import net.turtleboi.aspects.item.ModItems;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AspectHelper {
+public class AspectUtil {
     public static final String INFERNUM_ASPECT = "infernum";
     public static final String GLACIUS_ASPECT = "glacius";
     public static final String TERRA_ASPECT = "terra";
@@ -55,9 +56,21 @@ public class AspectHelper {
         }
     }
 
+    public static TextColor getAspectColor(String aspect) {
+        return switch (aspect) {
+            case INFERNUM_ASPECT -> TextColor.fromRgb(0xFF5733 );
+            case GLACIUS_ASPECT -> TextColor.fromRgb(0x96fff7);
+            case TERRA_ASPECT -> TextColor.fromRgb(0x9f7b06);
+            case TEMPESTAS_ASPECT -> TextColor.fromRgb(0xcbfb5d);
+            case ARCANI_ASPECT -> TextColor.fromRgb(0xca6aee);
+            case UMBRE_ASPECT -> TextColor.fromRgb(0xa7a1b0);
+            default -> TextColor.fromRgb(0xFFFFFF);
+        };
+    }
+
     public static void applyAspectAttributes(LivingEntity entity) {
         for (ItemStack armor : entity.getArmorSlots()) {
-            String aspect = AspectHelper.getAspect(armor);
+            String aspect = AspectUtil.getAspect(armor);
             if (aspect != null && !aspect.isEmpty()) {
                 switch (aspect) {
                     case INFERNUM_ASPECT:
@@ -67,11 +80,17 @@ public class AspectHelper {
                                 armor.getDescriptionId() + "inferum_infusion",
                                 1.0,
                                 AttributeModifier.Operation.ADD_VALUE);
+                        AttributeModifierUtil.applyPermanentModifier(
+                                entity,
+                                Attributes.MAX_HEALTH,
+                                armor.getDescriptionId() + "infernum_health_infusion",
+                                2.0,
+                                AttributeModifier.Operation.ADD_VALUE);
                         break;
                     case GLACIUS_ASPECT:
                         AttributeModifierUtil.applyPermanentModifier(
                                 entity,
-                                ModAttributes.INFERNUM_ASPECT,
+                                ModAttributes.GLACIUS_ASPECT,
                                 armor.getDescriptionId() + "glacius_infusion",
                                 1.0,
                                 AttributeModifier.Operation.ADD_VALUE);
@@ -146,7 +165,7 @@ public class AspectHelper {
         for (AttributeInstance instance : entity.getAttributes().getSyncableAttributes()) {
             List<ResourceLocation> toRemove = new ArrayList<>();
             for (AttributeModifier modifier : instance.getModifiers()) {
-                if (modifier.id().getNamespace().equals(Aspects.MODID)
+                if (modifier.id().getNamespace().equals(Aspects.MOD_ID)
                         && modifier.id().getPath().endsWith("_infusion")) {
                     toRemove.add(modifier.id());
                 }

@@ -10,7 +10,7 @@ import net.turtleboi.aspects.Aspects;
 
 public class AttributeModifierUtil {
     public static void applyPermanentModifier(LivingEntity livingEntity, Holder<Attribute> attributeHolder, String name, double value, AttributeModifier.Operation operation) {
-        ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath(Aspects.MODID, name);
+        ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, name);
         AttributeInstance attributeInstance = livingEntity.getAttribute(attributeHolder);
         if (attributeInstance != null) {
             if (attributeInstance.getModifier(modifierId) != null) {
@@ -21,7 +21,7 @@ public class AttributeModifierUtil {
     }
 
     public static void applyTransientModifier(LivingEntity livingEntity, Holder<Attribute> attributeHolder, String name, double value, AttributeModifier.Operation operation) {
-        ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath(Aspects.MODID, name);
+        ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, name);
         AttributeInstance attributeInstance = livingEntity.getAttribute(attributeHolder);
         if (attributeInstance != null) {
             if (attributeInstance.getModifier(modifierId) != null) {
@@ -32,7 +32,7 @@ public class AttributeModifierUtil {
     }
 
     public static void removeModifier(LivingEntity livingEntity, Holder<Attribute> attributeHolder, String name) {
-        ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath(Aspects.MODID, name);
+        ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, name);
         AttributeInstance attributeInstance = livingEntity.getAttribute(attributeHolder);
         if (attributeInstance != null) {
             attributeInstance.removeModifier(modifierId);

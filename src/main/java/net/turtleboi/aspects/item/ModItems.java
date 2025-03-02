@@ -7,7 +7,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.aspects.Aspects;
 
 public class ModItems {
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Aspects.MODID);
+    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Aspects.MOD_ID);
 
     public static final DeferredItem<Item> INFERNUM_RUNE = ITEMS.register("infernum_rune",
             () -> new Item(new Item.Properties()));

@@ -12,7 +12,7 @@ import java.util.function.UnaryOperator;
 
 public class ModDataComponents {
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES =
-            DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Aspects.MODID);
+            DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Aspects.MOD_ID);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> ASPECT_STRING = register("aspect_string",
             stringBuilder -> stringBuilder.persistent(Codec.STRING));
