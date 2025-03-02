@@ -16,7 +16,8 @@ public class FireAuraRenderer {
     private final long spawnTime;
     private final int totalAnimationTime;
     private final double amplifier;
-    public static final ResourceLocation AURA_TEXTURE = ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/fire_aura.png");
+    public static final ResourceLocation FIRE_AURA_TEXTURE = ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/fire_aura.png");
+    public static final ResourceLocation ULTRA_AURA_TEXTURE = ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/ultra_fire_aura.png");
 
     private static final List<FireAuraRenderer> AURA_INSTANCES = new CopyOnWriteArrayList<>();
 
@@ -42,12 +43,18 @@ public class FireAuraRenderer {
         poseStack.pushPose();
         float ticksElapsed = (System.currentTimeMillis() % spawnTime) / 50.0f;
         float tickCount = ticksElapsed + partialTicks;
+        float initialTicks = 5.0f;
+        float scale;
 
-        float rotationSpeed = 3.0f;
+        float rotationSpeed;
+        if (tickCount < initialTicks) {
+            rotationSpeed = 3.0f;
+        } else {
+            rotationSpeed = (float) (5.0f * amplifier);
+        }
+
         float rotationAngle = tickCount * rotationSpeed;
 
-        float scale;
-        float initialTicks = totalAnimationTime * 0.1f;
         if (tickCount < initialTicks) {
             scale = 0.25f * (tickCount / initialTicks);
         } else {
@@ -72,7 +79,14 @@ public class FireAuraRenderer {
         poseStack.mulPose(Axis.XP.rotationDegrees(-90));
         poseStack.scale(scale, scale, scale);
 
-        VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entityTranslucentCull(AURA_TEXTURE));
+        ResourceLocation texture;
+        if (amplifier > 3){
+            texture = ULTRA_AURA_TEXTURE;
+        } else {
+            texture = FIRE_AURA_TEXTURE;
+        }
+
+        VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entityTranslucentCull(texture));
 
         vertex(poseStack.last(), vertexConsumer, -6, -6, 0, 0, 0, 255, 255, 255, vertexAlpha);
         vertex(poseStack.last(), vertexConsumer, 6, -6, 0, 1, 0, 255, 255, 255, vertexAlpha);
