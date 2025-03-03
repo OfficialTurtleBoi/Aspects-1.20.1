@@ -6,10 +6,14 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.turtleboi.aspects.Aspects;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class FireAuraRenderer {
@@ -19,7 +23,8 @@ public class FireAuraRenderer {
     public static final ResourceLocation FIRE_AURA_TEXTURE = ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/fire_aura.png");
     public static final ResourceLocation ULTRA_AURA_TEXTURE = ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/ultra_fire_aura.png");
 
-    private static final List<FireAuraRenderer> AURA_INSTANCES = new CopyOnWriteArrayList<>();
+    public static final Map<UUID, List<FireAuraRenderer>> ENTITY_AURAS = new ConcurrentHashMap<>();
+
 
     public FireAuraRenderer(long currentTime, int totalAnimationTime, double amplifier) {
         this.spawnTime = currentTime;
@@ -27,19 +32,25 @@ public class FireAuraRenderer {
         this.amplifier = amplifier;
     }
 
-    public static void addAura(long currentTime, int totalAnimationTime, double amplifier) {
-        AURA_INSTANCES.add(new FireAuraRenderer(currentTime, totalAnimationTime, amplifier));
+    public static void addAuraForEntity(LivingEntity livingEntity, long currentTime, int totalAnimationTime, double amplifier) {
+        UUID uuid = livingEntity.getUUID();
+        List<FireAuraRenderer> auraList = ENTITY_AURAS.computeIfAbsent(uuid, key -> new CopyOnWriteArrayList<>());
+        auraList.add(new FireAuraRenderer(currentTime, totalAnimationTime, amplifier));
     }
 
-    public static void renderAuras(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Player player, float partialTicks) {
-        AURA_INSTANCES.removeIf(FireAuraRenderer::isExpired);
+    public static void renderAuras(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
+        UUID uuid = livingEntity.getUUID();
+        List<FireAuraRenderer> auraList = ENTITY_AURAS.get(uuid);
+        if (auraList != null) {
+            auraList.removeIf(FireAuraRenderer::isExpired);
 
-        for (FireAuraRenderer aura : AURA_INSTANCES) {
-            aura.renderAura(bufferSource, poseStack, player, partialTicks);
+            for (FireAuraRenderer aura : auraList) {
+                aura.renderAura(bufferSource, poseStack, livingEntity, partialTicks);
+            }
         }
     }
 
-    public void renderAura(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Player player, float partialTicks) {
+    public void renderAura(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
         poseStack.pushPose();
         float ticksElapsed = (System.currentTimeMillis() % spawnTime) / 50.0f;
         float tickCount = ticksElapsed + partialTicks;
@@ -72,9 +83,9 @@ public class FireAuraRenderer {
 
         int vertexAlpha = (int)(alpha * 255.0f);
 
-        poseStack.translate(0, player.getBbHeight() * 0.5, 0);
+        poseStack.translate(0, livingEntity.getBbHeight() * 0.5, 0);
         poseStack.scale(0.5F, 0.5F, 0.5F);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-player.getYRot()));
+        poseStack.mulPose(Axis.YP.rotationDegrees(-livingEntity.getYRot()));
         poseStack.mulPose(Axis.YP.rotationDegrees(-rotationAngle));
         poseStack.mulPose(Axis.XP.rotationDegrees(-90));
         poseStack.scale(scale, scale, scale);

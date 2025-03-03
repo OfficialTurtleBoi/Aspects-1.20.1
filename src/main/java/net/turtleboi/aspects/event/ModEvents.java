@@ -5,24 +5,36 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.StringUtil;
-import net.minecraft.world.entity.EntityEvent;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.PotionBrewing;
+import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
+import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
-import net.neoforged.neoforge.event.entity.living.LivingEvent;
+import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.client.renderer.FireAuraRenderer;
+import net.turtleboi.aspects.effect.ModEffects;
+import net.turtleboi.aspects.item.ModItems;
+import net.turtleboi.aspects.potion.ModPotions;
 import net.turtleboi.aspects.util.AspectUtil;
 import net.turtleboi.aspects.util.ModAttributes;
 import net.turtleboi.aspects.util.ModTags;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @EventBusSubscriber(modid = Aspects.MOD_ID)
 public class ModEvents {
@@ -75,8 +87,8 @@ public class ModEvents {
         if (event.getEntity() instanceof Player player && event.getSource().getEntity() instanceof LivingEntity attacker){
             if (player.getAttribute(ModAttributes.INFERNUM_ASPECT) != null) {
                 double infernumAmplifier = player.getAttributeValue(ModAttributes.INFERNUM_ASPECT);
-                if (infernumAmplifier > 0) {
-                    FireAuraRenderer.addAura(System.currentTimeMillis(), 30, infernumAmplifier);
+                if (infernumAmplifier > 0 && player.level().getRandom().nextDouble() < 0.35 + (0.1 * infernumAmplifier)) {
+                    FireAuraRenderer.addAuraForEntity(player, System.currentTimeMillis(), 30, infernumAmplifier);
 
                     player.level().playSound(
                             null,
@@ -90,20 +102,128 @@ public class ModEvents {
                     );
 
                     double radius = 1 + infernumAmplifier;
-                    List<LivingEntity> mobs = player.level().getEntitiesOfClass(
+                    List<LivingEntity> livingEntities = player.level().getEntitiesOfClass(
                             LivingEntity.class,
                             player.getBoundingBox().inflate(radius),
                             e -> e != player
                     );
-                    for (LivingEntity mob : mobs) {
-                        mob.igniteForTicks((int) (60 * infernumAmplifier));
+
+                    for (LivingEntity livingEntity : livingEntities) {
+                        setIgnitor(livingEntity, player);
+                        livingEntity.igniteForTicks((int) (60 * infernumAmplifier));
+                        if (infernumAmplifier > 1) {
+                            livingEntity.hurt(player.damageSources().onFire(), 1);
+                            livingEntity.setLastHurtByPlayer(player);
+                        }
                     }
                 }
             }
         }
     }
 
+    @SubscribeEvent
+    public static void onMobHurt(LivingDamageEvent.Post event) {
+        LivingEntity hurtEntity = event.getEntity();
+        if (hurtEntity instanceof LivingEntity livingEntity){
+            if (livingEntity.isOnFire()) {
+                List<Player> players = livingEntity.level().getEntitiesOfClass(
+                        Player.class,
+                        livingEntity.getBoundingBox().inflate(25.0),
+                        e -> e != livingEntity
+                );
+
+                for (Player player : players) {
+                    String ignitedBy = livingEntity.getPersistentData().getString("IgnitedBy");
+                    if (event.getSource().type() == livingEntity.level().damageSources().onFire().type()
+                            && ignitedBy.equals(player.getUUID().toString()) && player.getAttribute(ModAttributes.INFERNUM_ASPECT) != null) {
+                        double infernumAmplifier = player.getAttributeValue(ModAttributes.INFERNUM_ASPECT);
+                        if (infernumAmplifier > 0) {
+                            //System.out.println("Fire damage amplified by " + infernumAmplifier);
+                            livingEntity.hurt(player.damageSources().magic(), (float) (1f * (infernumAmplifier)));
+                        }
+                    }
+                }
+            }
+
+            if (event.getSource().getEntity() instanceof Player player) {
+                //FireAuraRenderer.addAuraForEntity(hurtEntity, System.currentTimeMillis(), 30, 2);
+
+                if (event.getSource() == livingEntity.damageSources().onFire()){
+                    setIgnitor(livingEntity, player);
+                }
+
+                ItemStack itemStack = player.getMainHandItem();
+                ItemEnchantments enchantsData = itemStack.get(DataComponents.ENCHANTMENTS);
+                if (enchantsData instanceof ItemEnchantments enchantments) {
+                    int flameLevel = enchantments.entrySet().stream()
+                            .filter(entry -> entry.getKey().is(Enchantments.FLAME))
+                            .mapToInt(Map.Entry::getValue)
+                            .findFirst().orElse(0);
+
+                    int fireAspectLevel = enchantments.entrySet().stream()
+                            .filter(entry -> entry.getKey().is(Enchantments.FIRE_ASPECT))
+                            .mapToInt(Map.Entry::getValue)
+                            .findFirst().orElse(0);
+                    if (flameLevel > 0 || fireAspectLevel > 0) {
+                        setIgnitor(livingEntity, player);
+                    }
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingEntityTick(EntityTickEvent.Post event){
+        if (event.getEntity() instanceof LivingEntity livingEntity){
+            if (!livingEntity.isOnFire() && livingEntity.getPersistentData().contains("IgnitedBy")) {
+                //System.out.println(livingEntity + " extinguished!");
+                livingEntity.getPersistentData().remove("IgnitedBy");
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPotionEffectApplied(MobEffectEvent.Added event) {
+        if (event.getEffectInstance().getEffect() == ModEffects.CHILLED) {
+            LivingEntity livingEntity = event.getEntity();
+            MobEffectInstance oldInstance = event.getOldEffectInstance();
+            if (oldInstance != null) {
+                int additional = (event.getEffectInstance().getAmplifier() == 0) ? 1 : event.getEffectInstance().getAmplifier() + 1;
+                int newAmplifier = oldInstance.getAmplifier() + additional;
+                int newDuration = Math.max(oldInstance.getDuration(), event.getEffectInstance().getDuration());
+                livingEntity.removeEffect(ModEffects.CHILLED);
+                livingEntity.hurtMarked = true;
+                livingEntity.addEffect(new MobEffectInstance(
+                        ModEffects.CHILLED,
+                        newDuration,
+                        newAmplifier,
+                        oldInstance.isAmbient(),
+                        oldInstance.isVisible(),
+                        oldInstance.showIcon()
+                ));
+            }
+        }
+    }
+
+
+    @SubscribeEvent
+    public static void onBrewingRecipeRegister(RegisterBrewingRecipesEvent event){
+        PotionBrewing.Builder builder = event.getBuilder();
+
+        builder.addMix(Potions.AWKWARD, Items.BLUE_ICE, ModPotions.CHILLING_POTION);
+        builder.addMix(ModPotions.CHILLING_POTION, Items.GLOWSTONE_DUST, ModPotions.CHILLING_POTION2);
+        builder.addMix(ModPotions.CHILLING_POTION2, ModItems.GLACIUS_RUNE.get(), ModPotions.FREEZING_POTION);
+        builder.addMix(Potions.THICK, ModItems.TEMPESTAS_RUNE.get(), ModPotions.STUNNING_POTION);
+    }
+
     private static boolean isRune(ItemStack itemStack) {
         return itemStack.is(ModTags.Items.RUNE_ITEMS);
+    }
+
+    private static void setIgnitor(LivingEntity livingEntity, Player player){
+        if (!livingEntity.getPersistentData().contains("IgnitedBy")) {
+            //System.out.println(livingEntity + " ignited by " + player + "!");
+            livingEntity.getPersistentData().putString("IgnitedBy", player.getUUID().toString());
+        }
     }
 }
