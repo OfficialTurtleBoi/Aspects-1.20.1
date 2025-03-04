@@ -19,7 +19,7 @@ public class ModEffects {
             () -> new FrozenEffect(MobEffectCategory.HARMFUL, 8752371));
 
     public static final Holder<MobEffect> STUNNED = MOB_EFFECTS.register("stunned",
-            () -> new StunnedEffect(MobEffectCategory.HARMFUL, 8752371));
+            () -> new StunnedEffect(MobEffectCategory.HARMFUL, 13676558));
 
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);

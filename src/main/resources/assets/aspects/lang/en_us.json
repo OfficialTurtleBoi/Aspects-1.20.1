@@ -3,6 +3,7 @@
 
   "effect.aspects.chilled": "Chilled",
   "effect.aspects.frozen": "Frozen",
+  "effect.aspects.static": "Static",
   "effect.aspects.stunned": "Stunned",
 
   "item.aspects.infernum_rune": "Infernum Rune",

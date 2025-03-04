@@ -1,11 +1,15 @@
 package net.turtleboi.aspects;
 
 import net.minecraft.world.item.CreativeModeTabs;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.turtleboi.aspects.block.ModBlocks;
 import net.turtleboi.aspects.component.ModDataComponents;
 import net.turtleboi.aspects.effect.ModEffects;
 import net.turtleboi.aspects.item.ModCreativeModeTabs;
 import net.turtleboi.aspects.item.ModItems;
+import net.turtleboi.aspects.particle.ChilledParticles;
+import net.turtleboi.aspects.particle.ModParticles;
+import net.turtleboi.aspects.particle.StunnedParticles;
 import net.turtleboi.aspects.potion.ModPotions;
 import net.turtleboi.aspects.util.ModAttributes;
 import org.slf4j.Logger;
@@ -43,6 +47,7 @@ public class Aspects {
         ModAttributes.REGISTRY.register(modEventBus);
         ModEffects.register(modEventBus);
         ModPotions.register(modEventBus);
+        ModParticles.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
 
@@ -74,6 +79,13 @@ public class Aspects {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
 
+        }
+
+        @SubscribeEvent
+        public static void registerParticleFactories(RegisterParticleProvidersEvent event){
+            event.registerSpriteSet(ModParticles.NONE_PARTICLES.get(), StunnedParticles.Provider::new);
+            event.registerSpriteSet(ModParticles.CHILLED_PARTICLES.get(), ChilledParticles.Provider::new);
+            event.registerSpriteSet(ModParticles.STUNNED_PARTICLES.get(), StunnedParticles.Provider::new);
         }
     }
 }
