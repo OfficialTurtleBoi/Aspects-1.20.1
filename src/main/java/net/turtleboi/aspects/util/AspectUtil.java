@@ -152,7 +152,7 @@ public class AspectUtil {
                                 AttributeModifier.Operation.ADD_VALUE);
                         AttributeModifierUtil.applyPermanentModifier(entity,
                                 Attributes.MOVEMENT_SPEED,
-                                armor + "umbre_speed_infusion",
+                                armor.getDescriptionId() + "umbre_speed_infusion",
                                 0.05,
                                 AttributeModifier.Operation.ADD_VALUE);
                         break;

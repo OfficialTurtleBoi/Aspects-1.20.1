@@ -2,12 +2,12 @@ package net.turtleboi.aspects.effect;
 
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -15,6 +15,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.network.payloads.ParticleData;
@@ -128,6 +129,15 @@ public class StunnedEffect extends MobEffect {
                 mob.hurtMarked = true;
             }
         }
+        if(pLivingEntity.getEffect(ModEffects.STUNNED).getDuration()==1&&pAmplifier>=3){
+            Level level = pLivingEntity.level();
+            if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
+
+                LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, level);
+                lightning.setPos(pLivingEntity.getX(), pLivingEntity.getY(), pLivingEntity.getZ());
+                level.addFreshEntity(lightning);
+            }
+        }
         return super.applyEffectTick(pLivingEntity, pAmplifier);
     }
 
@@ -171,4 +181,7 @@ public class StunnedEffect extends MobEffect {
             this.savedZ = z;
         }
     }
+
+
+
 }
