@@ -3,12 +3,14 @@ package net.turtleboi.aspects.block;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.turtleboi.aspects.Aspects;
+import net.turtleboi.aspects.block.custom.PedestalBlock;
 import net.turtleboi.aspects.item.ModItems;
 
 import java.util.function.Supplier;
@@ -22,6 +24,9 @@ public class ModBlocks {
                     .strength(4F)
                     .requiresCorrectToolForDrops()
                     .sound(SoundType.AMETHYST)));
+
+    public static final DeferredBlock<Block> PEDESTAL = registerBlock("pedestal",
+            () -> new PedestalBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)));
 
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block){
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);

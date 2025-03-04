@@ -2,7 +2,9 @@ package net.turtleboi.aspects.network.payloads;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
@@ -12,6 +14,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.turtleboi.aspects.Aspects;
@@ -39,14 +42,18 @@ public record ParticleData(ResourceLocation particleType, double x, double y, do
         context.enqueueWork(() -> {
             ClientLevel world = Minecraft.getInstance().level;
             if (world != null) {
-                Object candidate = BuiltInRegistries.PARTICLE_TYPE.get(data.particleType());
+                ParticleType<?> type = BuiltInRegistries.PARTICLE_TYPE.get(data.particleType());
                 ParticleOptions particle;
-                if (candidate instanceof ParticleOptions options) {
-                    particle = options;
-                } else {
-                    particle = ParticleTypes.EXPLOSION;
+                if (type != null) {
+                    if (type instanceof ParticleOptions options) {
+                        particle = options;
+                    } else if (type.equals(ParticleTypes.BLOCK)) {
+                        particle = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ICE.defaultBlockState());
+                    } else {
+                        particle = ParticleTypes.EXPLOSION;
+                    }
+                    world.addParticle(particle, data.x(), data.y(), data.z(), 0, 0, 0);
                 }
-                world.addParticle(particle, data.x(), data.y(), data.z(), 0, 0, 0);
             }
         }).exceptionally(e -> {
             context.disconnect(Component.translatable("aspects.networking.failed", e.getMessage()));

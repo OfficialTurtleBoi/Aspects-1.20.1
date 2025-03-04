@@ -1,7 +1,13 @@
 package net.turtleboi.aspects.event;
 
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.StringUtil;
@@ -15,6 +21,7 @@ import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
@@ -24,9 +31,11 @@ import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.turtleboi.aspects.Aspects;
+import net.turtleboi.aspects.client.renderer.ColdAuraRenderer;
 import net.turtleboi.aspects.client.renderer.FireAuraRenderer;
 import net.turtleboi.aspects.effect.ModEffects;
 import net.turtleboi.aspects.item.ModItems;
+import net.turtleboi.aspects.network.payloads.ParticleData;
 import net.turtleboi.aspects.potion.ModPotions;
 import net.turtleboi.aspects.util.AspectUtil;
 import net.turtleboi.aspects.util.ModAttributes;
@@ -123,6 +132,7 @@ public class ModEvents {
             if (player.getAttribute(ModAttributes.GLACIUS_ASPECT) != null) {
                 double glaciusAmplifier = player.getAttributeValue(ModAttributes.GLACIUS_ASPECT);
                 if (glaciusAmplifier > 0 && player.level().getRandom().nextDouble() < 0.35 + (0.1 * glaciusAmplifier)) {
+
                     player.level().playSound(
                             null,
                             attacker.getX(),
@@ -197,6 +207,21 @@ public class ModEvents {
                             1.25F,
                             0.4f / (hurtEntity.level().getRandom().nextFloat() * 0.4f + 0.8f)
                     );
+
+                    double entitySize = hurtEntity.getBbHeight() * hurtEntity.getBbWidth();
+                    System.out.println("Spawning " + (entitySize * 60) + " particles for " + hurtEntity.getName());
+                    for (int i = 0; i < entitySize * 60; i++) {
+                        double offX = (hurtEntity.level().random.nextDouble() - 0.5) * 0.5;
+                        double offY = hurtEntity.getBbHeight() * hurtEntity.level().random.nextDouble();
+                        double offZ = (hurtEntity.level().random.nextDouble() - 0.5) * 0.5;
+                        ParticleOptions particle = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ICE.defaultBlockState());
+                        ResourceLocation particleKey = BuiltInRegistries.PARTICLE_TYPE.getKey(particle.getType());
+                        ParticleData.spawnParticle(
+                                particleKey,
+                                hurtEntity.getX() + offX,
+                                hurtEntity.getY() + offY,
+                                hurtEntity.getZ() + offZ);
+                    }
                 }
             }
 

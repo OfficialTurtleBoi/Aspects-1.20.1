@@ -30,6 +30,10 @@ public class FrozenEffect extends MobEffect {
     @Override
     public boolean applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
         if (!pLivingEntity.level().isClientSide()) {
+            if(pLivingEntity.hasEffect(ModEffects.CHILLED)){
+                pLivingEntity.removeEffect(ModEffects.CHILLED);
+            }
+
             int duration = Objects.requireNonNull(pLivingEntity.getEffect(ModEffects.FROZEN)).getDuration();
             if (!pLivingEntity.level().isClientSide() && duration > 2) {
                 //System.out.println("Freezing: " + pLivingEntity);

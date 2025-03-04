@@ -2,6 +2,7 @@ package net.turtleboi.aspects;
 
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
+import net.turtleboi.aspects.block.ModBlockEntities;
 import net.turtleboi.aspects.block.ModBlocks;
 import net.turtleboi.aspects.component.ModDataComponents;
 import net.turtleboi.aspects.effect.ModEffects;
@@ -41,6 +42,7 @@ public class Aspects {
 
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
+        ModBlockEntities.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
 
         ModDataComponents.register(modEventBus);

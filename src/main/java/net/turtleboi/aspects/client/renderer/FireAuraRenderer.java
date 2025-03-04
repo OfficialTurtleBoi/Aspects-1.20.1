@@ -25,7 +25,6 @@ public class FireAuraRenderer {
 
     public static final Map<UUID, List<FireAuraRenderer>> ENTITY_AURAS = new ConcurrentHashMap<>();
 
-
     public FireAuraRenderer(long currentTime, int totalAnimationTime, double amplifier) {
         this.spawnTime = currentTime;
         this.totalAnimationTime = totalAnimationTime;
@@ -112,7 +111,7 @@ public class FireAuraRenderer {
         poseStack.popPose();
     }
 
-    public static void vertex(PoseStack.Pose pose, VertexConsumer consumer, int x, int y, int z, float u, float v, int red, int green, int blue, int vertexAlpha) {
+    private static void vertex(PoseStack.Pose pose, VertexConsumer consumer, int x, int y, int z, float u, float v, int red, int green, int blue, int vertexAlpha) {
         consumer.addVertex(pose, (float)x, (float)y, (float)z)
                 .setColor(red, green, blue, vertexAlpha)
                 .setUv(u, v)

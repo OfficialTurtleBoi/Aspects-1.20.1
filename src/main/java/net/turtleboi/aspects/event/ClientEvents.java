@@ -5,26 +5,19 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.ArrowRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
-import net.neoforged.neoforge.client.event.RenderLivingEvent;
-import net.neoforged.neoforge.client.event.RenderPlayerEvent;
+import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.turtleboi.aspects.Aspects;
+import net.turtleboi.aspects.client.renderer.ColdAuraRenderer;
 import net.turtleboi.aspects.client.renderer.FireAuraRenderer;
 import net.turtleboi.aspects.effect.ModEffects;
 import net.turtleboi.aspects.effect.StunnedEffect;
-import net.turtleboi.aspects.particle.ModParticles;
 import net.turtleboi.aspects.util.AspectUtil;
 
 import java.util.UUID;
@@ -63,6 +56,7 @@ public class ClientEvents {
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource bufferSource = (MultiBufferSource.BufferSource) event.getMultiBufferSource();
         FireAuraRenderer.renderAuras(bufferSource, poseStack, livingEntity, event.getPartialTick());
+        ColdAuraRenderer.renderAuras(bufferSource, poseStack, livingEntity, event.getPartialTick());
     }
 
     @SubscribeEvent
