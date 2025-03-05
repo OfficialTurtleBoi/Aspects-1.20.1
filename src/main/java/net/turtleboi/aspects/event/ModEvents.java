@@ -12,7 +12,10 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
@@ -300,16 +303,82 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onPotionEffectApplied(MobEffectEvent.Added event) {
-        if (event.getEffectInstance().getEffect() == ModEffects.CHILLED) {
-            LivingEntity livingEntity = event.getEntity();
-            MobEffectInstance oldInstance = event.getOldEffectInstance();
+        LivingEntity livingEntity = event.getEntity();
+        Entity sourceEntity = event.getEffectSource();
+        MobEffectInstance effectInstance = event.getEffectInstance();
+        MobEffectInstance oldInstance = event.getOldEffectInstance();
+
+        double arcaniAmplifier = 0;
+        if (sourceEntity instanceof Player player) {
+            if (player.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                arcaniAmplifier = player.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+            }
+        } else {
+            if (livingEntity.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                arcaniAmplifier = livingEntity.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+            }
+        }
+
+        if (arcaniAmplifier > 0) {
+            double arcaneFactor = 1 + (arcaniAmplifier / 4.0);
+            double multiplier = 1;
+            boolean beneficialEffect = effectInstance.getEffect().value().isBeneficial();
+            if (sourceEntity == livingEntity) {
+                if (beneficialEffect) {
+                    multiplier = arcaneFactor;
+                }
+            } else {
+                boolean sourceIsHostile = sourceEntity instanceof Monster;
+                boolean targetIsPlayer = livingEntity instanceof Player;
+                boolean targetIsHostile = livingEntity instanceof Monster;
+                if (sourceEntity instanceof Player) {
+                    if (beneficialEffect) {
+                        if (targetIsHostile){
+                            livingEntity.removeEffect(effectInstance.getEffect());
+                        }
+                    } else {
+                        multiplier = arcaneFactor;
+                    }
+                } else if (sourceIsHostile) {
+                    if (beneficialEffect) {
+                        if (targetIsHostile){
+                            multiplier = arcaneFactor;
+                        } else if (targetIsPlayer) {
+                            livingEntity.removeEffect(effectInstance.getEffect());
+                        }
+                    }
+                }else {
+                    if (beneficialEffect) {
+                        if (!targetIsHostile){
+                            multiplier = arcaneFactor;
+                        } else {
+                            livingEntity.removeEffect(effectInstance.getEffect());
+                        }
+                    }
+                }
+            }
+
+            int newDuration = (int) (effectInstance.getDuration() * multiplier);
+            System.out.println("Multiplier: " + multiplier);
+            if (multiplier > 1) {
+                System.out.println("Increasing potion duration by " + ((multiplier - 1) * 100) + "% and total duration: " + (newDuration / 20) + " seconds");
+                effectInstance.update(new MobEffectInstance(
+                        effectInstance.getEffect(),
+                        newDuration,
+                        effectInstance.getAmplifier(),
+                        effectInstance.isAmbient(),
+                        effectInstance.isVisible(),
+                        effectInstance.showIcon()
+                ));
+            }
+        }
+
+        if (effectInstance.getEffect() == ModEffects.CHILLED) {
             if (oldInstance != null) {
-                int additional = (event.getEffectInstance().getAmplifier() == 0) ? 1 : event.getEffectInstance().getAmplifier() + 1;
+                int additional = (effectInstance.getAmplifier() == 0) ? 1 : effectInstance.getAmplifier() + 1;
                 int newAmplifier = oldInstance.getAmplifier() + additional;
-                int newDuration = Math.max(oldInstance.getDuration(), event.getEffectInstance().getDuration());
-                livingEntity.removeEffect(ModEffects.CHILLED);
-                livingEntity.hurtMarked = true;
-                livingEntity.addEffect(new MobEffectInstance(
+                int newDuration = Math.max(oldInstance.getDuration(), effectInstance.getDuration());
+                effectInstance.update(new MobEffectInstance(
                         ModEffects.CHILLED,
                         newDuration,
                         newAmplifier,
@@ -321,7 +390,6 @@ public class ModEvents {
         }
 
         if (event.getEffectInstance().getEffect() == ModEffects.FROZEN) {
-            LivingEntity livingEntity = event.getEntity();
             setFrozen(livingEntity);
         }
     }
