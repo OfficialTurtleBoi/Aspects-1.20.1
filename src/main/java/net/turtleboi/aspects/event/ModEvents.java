@@ -170,7 +170,7 @@ public class ModEvents {
             if (player.getAttribute(ModAttributes.GLACIUS_ASPECT) != null) {
                 double glaciusAmplifier = player.getAttributeValue(ModAttributes.GLACIUS_ASPECT);
                 if (glaciusAmplifier > 0 && player.level().getRandom().nextDouble() < 0.35 + (0.1 * glaciusAmplifier)) {
-
+                    ColdAuraRenderer.addAuraForEntity(player, System.currentTimeMillis(), 30, glaciusAmplifier);
                     player.level().playSound(
                             null,
                             attacker.getX(),
@@ -493,7 +493,9 @@ public class ModEvents {
         }
 
         if (event.getEffectInstance().getEffect() == ModEffects.FROZEN) {
-            setFrozen(livingEntity, livingEntity.getPersistentData().getUUID("ChilledBy"));
+            if (livingEntity.getPersistentData().contains("ChilledBy")) {
+                setFrozen(livingEntity, livingEntity.getPersistentData().getUUID("ChilledBy"));
+            }
         }
     }
 
