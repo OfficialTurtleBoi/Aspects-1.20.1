@@ -18,9 +18,11 @@ import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.network.payloads.ParticleData;
 import net.turtleboi.aspects.particle.ModParticles;
 import net.turtleboi.aspects.util.AttributeModifierUtil;
+import net.turtleboi.aspects.util.ModAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.UUID;
 
 public class ChilledEffect extends MobEffect {
     private final String attributeModifierName = "chilled_movement_speed";
@@ -63,7 +65,21 @@ public class ChilledEffect extends MobEffect {
             }
 
             if (pAmplifier > 3){
-                pLivingEntity.addEffect(new MobEffectInstance(ModEffects.FROZEN, 100, 0));
+                int freezeDuration = 100;
+                if (pLivingEntity.getPersistentData().hasUUID("ChilledBy")) {
+                    UUID chilledByUUID = pLivingEntity.getPersistentData().getUUID("ChilledBy");
+                    if (pLivingEntity.level() instanceof ServerLevel serverLevel) {
+                        Entity chilledByEntity = serverLevel.getEntity(chilledByUUID);
+                        if (chilledByEntity instanceof LivingEntity chillerEntity) {
+                            if (chillerEntity.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                                double arcaniAmplifier = chillerEntity.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+                                double arcaneFactor = 1 + (arcaniAmplifier / 4.0);
+                                freezeDuration = (int) (100 * arcaneFactor);
+                            }
+                        }
+                    }
+                }
+                pLivingEntity.addEffect(new MobEffectInstance(ModEffects.FROZEN, freezeDuration, 0));
                 pLivingEntity.removeEffect(ModEffects.CHILLED);
             }
         }
