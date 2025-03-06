@@ -33,7 +33,7 @@ public class ChilledEffect extends MobEffect {
     @Override
     public boolean applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
         if (!pLivingEntity.level().isClientSide && pLivingEntity.tickCount % 5 == 0){
-            for (int i = 0; i < (pAmplifier + 1); i++) {
+            for (int i = 0; i < ((pAmplifier + 1) * 2); i++) {
                 double offX = (pLivingEntity.level().random.nextDouble() - 0.5) * 0.5;
                 double offY = pLivingEntity.getBbHeight() * pLivingEntity.level().random.nextDouble();
                 double offZ = (pLivingEntity.level().random.nextDouble() - 0.5) * 0.5;

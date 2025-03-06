@@ -8,6 +8,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.StringUtil;
@@ -180,8 +181,19 @@ public class   ModEvents {
                             1.0F,
                             0.4f / (player.level().getRandom().nextFloat() * 0.4f + 0.8f)
                     );
+                    double offX = (player.level().random.nextDouble() - 0.5) * 0.5;
+                    double offY = player.getBbHeight() * player.level().random.nextDouble();
+                    double offZ = (player.level().random.nextDouble() - 0.5) * 0.5;
+                    for (int i = 0; i < ((glaciusAmplifier + 1) * 20); i++) {
+                        ParticleData.spawnParticle(
+                                ResourceLocation.fromNamespaceAndPath("minecraft", "snowflake"),
+                                player.getX() + offX,
+                                player.getY() + offY,
+                                player.getZ() + offZ);
+                    }
                     setChiller(attacker, player);
-                    attacker.addEffect(new MobEffectInstance(ModEffects.CHILLED, (int) (40 * glaciusAmplifier), (int) glaciusAmplifier - 1));
+                    int chillTicks = (int) ((40 * glaciusAmplifier) * arcaneFactor);
+                    attacker.addEffect(new MobEffectInstance(ModEffects.CHILLED, chillTicks, (int) glaciusAmplifier - 1));
                 }
             }
         }
@@ -191,6 +203,12 @@ public class   ModEvents {
     public static void onMobHurt(LivingDamageEvent.Post event) {
         LivingEntity hurtEntity = event.getEntity();
         if (hurtEntity instanceof LivingEntity livingEntity){
+            double hurtArcaniAmplifier = 0;
+            if (livingEntity.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                hurtArcaniAmplifier = livingEntity.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+            }
+            double hurtArcaniFactor = 1 + (hurtArcaniAmplifier / 4.0);
+
             if (livingEntity.isOnFire()) {
                 List<Player> players = livingEntity.level().getEntitiesOfClass(
                         Player.class,
@@ -203,24 +221,31 @@ public class   ModEvents {
                         return;
                     }
 
+                    double playerArcaniAmplifier = 0;
+                    if (player.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                        playerArcaniAmplifier = player.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+                    } else if (player == hurtEntity) {
+                        playerArcaniAmplifier = 0;
+                    }
+                    double playerArcaniFactor = 1 + (playerArcaniAmplifier / 4.0);
+
                     UUID ignitedBy = livingEntity.getPersistentData().getUUID("IgnitedBy");
                     if (event.getSource().type() == livingEntity.level().damageSources().onFire().type()
                             && ignitedBy.equals(player.getUUID()) && player.getAttribute(ModAttributes.INFERNUM_ASPECT) != null) {
                         double infernumAmplifier = player.getAttributeValue(ModAttributes.INFERNUM_ASPECT);
                         if (infernumAmplifier > 0) {
                             //System.out.println("Fire damage amplified by " + infernumAmplifier);
-                            livingEntity.hurt(player.damageSources().magic(), (float) (1f * (infernumAmplifier)));
-                            if (player.getAttribute(ModAttributes.GLACIUS_ASPECT) != null) {
-                                double arcaniAmplifier = 0;
-                                if (player.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
-                                    arcaniAmplifier = player.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
-                                }
-                                double arcaneFactor = 1 + (arcaniAmplifier / 4.0);
-
+                            livingEntity.hurt(
+                                    player.damageSources().magic(),
+                                    (float) (((1f * (infernumAmplifier)) * playerArcaniFactor) / hurtArcaniFactor));
+                            if (player.getAttribute(ModAttributes.GLACIUS_ASPECT) != null && player.getAttributeValue(ModAttributes.GLACIUS_ASPECT) > 0) {
                                 double glaciusAmplifier = player.getAttributeValue(ModAttributes.GLACIUS_ASPECT);
                                 setChiller(livingEntity, player);
                                 hurtEntity.addEffect(
-                                        new MobEffectInstance(ModEffects.CHILLED, (int) ((60 * glaciusAmplifier) * arcaneFactor), (int) glaciusAmplifier - 1));
+                                        new MobEffectInstance(
+                                                ModEffects.CHILLED,
+                                                (int) (((60 * glaciusAmplifier) * playerArcaniFactor) / hurtArcaniFactor),
+                                                (int) glaciusAmplifier - 1));
                             }
                         }
                     }
@@ -243,13 +268,25 @@ public class   ModEvents {
                 if (event.getSource().getEntity() instanceof LivingEntity attacker
                         && attacker.getAttribute(ModAttributes.GLACIUS_ASPECT) != null){
                     double glaciusAmplifier = attacker.getAttributeValue(ModAttributes.GLACIUS_ASPECT);
-                    maxDamage = (int) (10 + (10 * (glaciusAmplifier / 4)));
+                    double attackerArcaniAmplifier = 0;
+                    if (attacker.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                        attackerArcaniAmplifier = attacker.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+                    } else if (attacker == hurtEntity) {
+                        attackerArcaniAmplifier = 0;
+                    }
+                    double attackerArcaniFactor = 1 + (attackerArcaniAmplifier / 4.0);
+                    maxDamage = (int) ((10 + (10 * (glaciusAmplifier / 4) * attackerArcaniFactor) / hurtArcaniFactor));
                 }
 
                 if (hurtEntity.getPersistentData().contains("FrozenBy")) {
                     hurtEntity.getPersistentData().remove("FrozenBy");
                     System.out.println("Dealing " + maxDamage + " damage to " + hurtEntity);
-                    hurtEntity.hurt(ModDamageSources.frozenDamage(hurtEntity.level(), null, null), Math.min(maxDamage, entityMaxHealth / 4));
+                    hurtEntity.hurt(
+                            ModDamageSources.frozenDamage(
+                                    hurtEntity.level(),
+                                    null,
+                                    null),
+                            Math.min(maxDamage, entityMaxHealth / 4));
                     hurtEntity.level().playSound(
                             null,
                             hurtEntity.getX(),
@@ -279,11 +316,11 @@ public class   ModEvents {
             }
 
             if (event.getSource().getEntity() instanceof Player player) {
-                double arcaniAmplifier = 0;
+                double playerArcaniAmplifier = 0;
                 if (player.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
-                    arcaniAmplifier = player.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+                    playerArcaniAmplifier = player.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
                 }
-                double arcaneFactor = 1 + (arcaniAmplifier / 4.0);
+                double playerArcaniFactor = 1 + (playerArcaniAmplifier / 4.0);
 
                 if (event.getSource() == livingEntity.damageSources().onFire()){
                     setIgnitor(livingEntity, player);
@@ -291,7 +328,10 @@ public class   ModEvents {
                         double glaciusAmplifier = player.getAttributeValue(ModAttributes.GLACIUS_ASPECT);
                         setChiller(livingEntity, player);
                         hurtEntity.addEffect(
-                                new MobEffectInstance(ModEffects.CHILLED, (int) ((60 * glaciusAmplifier) * arcaneFactor), (int) glaciusAmplifier - 1));
+                                new MobEffectInstance(
+                                        ModEffects.CHILLED,
+                                        (int) (((60 * glaciusAmplifier) * playerArcaniFactor) / hurtArcaniFactor),
+                                        (int) glaciusAmplifier - 1));
                     }
                 }
 
@@ -316,8 +356,8 @@ public class   ModEvents {
                             ignitionTime = 80 * fireAspectLevel;
                         }
                         System.out.println("Igniting " + hurtEntity.getName() + " for " + ignitionTime / 20 + " seconds");
-                        if (arcaneFactor > 1) {
-                            int upgradedTicks = (int) (ignitionTime * arcaneFactor);
+                        if (playerArcaniFactor > 1) {
+                            int upgradedTicks = (int) (ignitionTime * playerArcaniFactor);
                             if (livingEntity.isOnFire()) {
                                 int currentTicks = livingEntity.getRemainingFireTicks();
                                 livingEntity.setRemainingFireTicks(currentTicks + upgradedTicks);
@@ -351,7 +391,10 @@ public class   ModEvents {
                         );
                         setChiller(livingEntity, player);
                         hurtEntity.addEffect(
-                                new MobEffectInstance(ModEffects.CHILLED, (int) ((60 * glaciusAmplifier) * arcaneFactor), (int) glaciusAmplifier - 1));
+                                new MobEffectInstance(
+                                        ModEffects.CHILLED,
+                                        (int) (((60 * glaciusAmplifier) * playerArcaniFactor) / hurtArcaniFactor),
+                                        (int) glaciusAmplifier - 1));
                     }
                 }
 
@@ -373,10 +416,13 @@ public class   ModEvents {
                                 Component.translatable(
                                         livingEntity.getName().getString()) +
                                         " stunned by " + player + " for " +
-                                        ((40 * tempestasAmplifier) * arcaneFactor) / 20 + " seconds!"
+                                        (int) (((20 * tempestasAmplifier) * playerArcaniFactor) / hurtArcaniFactor) / 20 + " seconds!"
                         );
                         hurtEntity.addEffect(
-                                new MobEffectInstance(ModEffects.STUNNED, (int) ((20 * tempestasAmplifier) * arcaneFactor), (int) tempestasAmplifier - 1));
+                                new MobEffectInstance(
+                                        ModEffects.STUNNED,
+                                        (int) (((20 * tempestasAmplifier) * playerArcaniFactor) / hurtArcaniFactor),
+                                        (int) tempestasAmplifier - 1));
                     }
                 }
             }

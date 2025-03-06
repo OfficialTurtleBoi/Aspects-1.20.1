@@ -129,13 +129,13 @@ public class StunnedEffect extends MobEffect {
                 mob.hurtMarked = true;
             }
         }
-        if(pLivingEntity.getEffect(ModEffects.STUNNED).getDuration()==1&&pAmplifier>=3){
-            Level level = pLivingEntity.level();
-            if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
 
-                LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, level);
+        if(pLivingEntity.getEffect(ModEffects.STUNNED).getDuration() == 1 && pAmplifier >= 3){
+            Level level = pLivingEntity.level();
+            if (level instanceof ServerLevel serverLevel) {
+                LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, serverLevel);
                 lightning.setPos(pLivingEntity.getX(), pLivingEntity.getY(), pLivingEntity.getZ());
-                level.addFreshEntity(lightning);
+                serverLevel.addFreshEntity(lightning);
             }
         }
         return super.applyEffectTick(pLivingEntity, pAmplifier);
