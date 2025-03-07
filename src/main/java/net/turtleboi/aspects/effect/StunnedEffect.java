@@ -16,11 +16,14 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.network.payloads.ParticleData;
 import net.turtleboi.aspects.particle.ModParticles;
+import net.turtleboi.aspects.util.AspectUtil;
 import net.turtleboi.aspects.util.AttributeModifierUtil;
+import net.turtleboi.aspects.util.ModAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -138,8 +141,38 @@ public class StunnedEffect extends MobEffect {
                 serverLevel.addFreshEntity(lightning);
             }
         }
+
+        int randomint = pLivingEntity.level().random.nextInt(100);
+
+        if (randomint<80) {
+            AABB area = new AABB(pLivingEntity.getX() - 4, pLivingEntity.getY() - 4, pLivingEntity.getZ() - 4,
+                    pLivingEntity.getX() + 4, pLivingEntity.getY() + 4, pLivingEntity.getZ() + 4);
+
+            List<LivingEntity> entities = pLivingEntity.level().getEntitiesOfClass(LivingEntity.class, area, e -> e != pLivingEntity && !(e instanceof Player));
+            if (!entities.isEmpty()){
+                if (randomint<10){
+                    LivingEntity chosen = entities.get(pLivingEntity.level().getRandom().nextInt(entities.size()));
+                    if (!storedEntities.contains(chosen)) {
+                        storedEntities.add(chosen);
+                    }
+                }
+
+                for (LivingEntity target : storedEntities) {
+                    Vec3 direction = new Vec3(pLivingEntity.getX() - target.getX(), pLivingEntity.getY() - target.getY(), pLivingEntity.getZ() - target.getZ());
+                    direction = direction.normalize().scale(0.5); // Adjust speed
+
+                    target.setDeltaMovement(direction);
+                    target.hurtMarked = true; // Ensures movement updates visually
+                }
+        }
+}
+
+
+
+
         return super.applyEffectTick(pLivingEntity, pAmplifier);
     }
+    private final List<LivingEntity> storedEntities = new ArrayList<>();
 
     @Override
     public boolean shouldApplyEffectTickThisTick(int pDuration, int pAmplifier) {
