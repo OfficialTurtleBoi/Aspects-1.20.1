@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
@@ -180,15 +181,25 @@ public class   ModEvents {
                             1.0F,
                             0.4f / (player.level().getRandom().nextFloat() * 0.4f + 0.8f)
                     );
-                    double offX = (player.level().random.nextDouble() - 0.5) * 0.5;
-                    double offY = player.getBbHeight() * player.level().random.nextDouble();
-                    double offZ = (player.level().random.nextDouble() - 0.5) * 0.5;
-                    for (int i = 0; i < ((glaciusAmplifier + 1) * 20); i++) {
+                    RandomSource random = player.level().getRandom();
+                    int count = (int) ((glaciusAmplifier + 1) * 20);
+                    for (int i = 0; i < count; i++) {
+                        double theta = random.nextDouble() * Math.PI;
+                        double phi = random.nextDouble() * 2 * Math.PI;
+                        double speed = 0.2 + random.nextDouble() * 0.3;
+                        double xSpeed = speed * Math.sin(theta) * Math.cos(phi);
+                        double ySpeed = speed * Math.cos(theta);
+                        double zSpeed = speed * Math.sin(theta) * Math.sin(phi);
+                        double offX = (random.nextDouble() - 0.5) * 0.2;
+                        double offY = player.getBbHeight() / 2;
+                        double offZ = (random.nextDouble() - 0.5) * 0.2;
+
                         ParticleData.spawnParticle(
-                                ResourceLocation.fromNamespaceAndPath("minecraft", "snowflake"),
+                                ParticleTypes.SNOWFLAKE,
                                 player.getX() + offX,
                                 player.getY() + offY,
-                                player.getZ() + offZ);
+                                player.getZ() + offZ,
+                                xSpeed,ySpeed,zSpeed);
                     }
                     setChiller(attacker, player);
                     int chillTicks = (int) ((40 * glaciusAmplifier) * arcaneFactor);
@@ -277,7 +288,7 @@ public class   ModEvents {
                     maxDamage = (int) ((10 + (10 * (glaciusAmplifier / 4) * attackerArcaniFactor) / hurtArcaniFactor));
                 }
 
-                System.out.println("Dealing " + maxDamage + " damage to " + hurtEntity);
+                //System.out.println("Dealing " + maxDamage + " damage to " + hurtEntity);
                 hurtEntity.hurt(
                         ModDamageSources.frozenDamage(
                                 hurtEntity.level(),
@@ -296,17 +307,26 @@ public class   ModEvents {
                 );
                 double entitySize = hurtEntity.getBbHeight() * hurtEntity.getBbWidth();
                 //System.out.println("Spawning " + (entitySize * 60) + " particles for " + hurtEntity.getName());
-                for (int i = 0; i < entitySize * 60; i++) {
-                    double offX = (hurtEntity.level().random.nextDouble() - 0.5) * 0.5;
-                    double offY = hurtEntity.getBbHeight() * hurtEntity.level().random.nextDouble();
-                    double offZ = (hurtEntity.level().random.nextDouble() - 0.5) * 0.5;
+                RandomSource random = hurtEntity.level().getRandom();
+                int count = (int) (entitySize * 60);
+                for (int i = 0; i < count; i++) {
+                    double offX = (random.nextDouble() - 0.5) * 0.5;
+                    double offY = hurtEntity.getBbHeight() / 2;
+                    double offZ = (random.nextDouble() - 0.5) * 0.5;
+                    double theta = random.nextDouble() * Math.PI;
+                    double phi = random.nextDouble() * 2 * Math.PI;
+                    double speed = 0.5 + random.nextDouble() * 0.5;
+                    double xSpeed = speed * Math.sin(theta) * Math.cos(phi);
+                    double ySpeed = speed * Math.cos(theta);
+                    double zSpeed = speed * Math.sin(theta) * Math.sin(phi);
                     ParticleOptions particle = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ICE.defaultBlockState());
-                    ResourceLocation particleKey = BuiltInRegistries.PARTICLE_TYPE.getKey(particle.getType());
+
                     ParticleData.spawnParticle(
-                            particleKey,
+                            particle,
                             hurtEntity.getX() + offX,
                             hurtEntity.getY() + offY,
-                            hurtEntity.getZ() + offZ);
+                            hurtEntity.getZ() + offZ,
+                            xSpeed, ySpeed, zSpeed);
                 }
             }
 
@@ -569,7 +589,7 @@ public class   ModEvents {
 
     private static void setFrozen(LivingEntity livingEntity, UUID uuid){
         if (!livingEntity.getPersistentData().contains("FrozenBy")) {
-            System.out.println(livingEntity + " was frozen by" + uuid.toString() + "!");
+            //System.out.println(livingEntity + " was frozen by" + uuid.toString() + "!");
             livingEntity.getPersistentData().putUUID("FrozenBy", uuid);
         }
     }

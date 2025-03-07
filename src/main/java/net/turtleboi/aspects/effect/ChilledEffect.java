@@ -38,10 +38,11 @@ public class ChilledEffect extends MobEffect {
                 double offY = pLivingEntity.getBbHeight() * pLivingEntity.level().random.nextDouble();
                 double offZ = (pLivingEntity.level().random.nextDouble() - 0.5) * 0.5;
                 ParticleData.spawnParticle(
-                        ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "chilled_particles"),
+                        ModParticles.CHILLED_PARTICLES.get(),
                         pLivingEntity.getX() + offX,
                         pLivingEntity.getY() + offY,
-                        pLivingEntity.getZ() + offZ);
+                        pLivingEntity.getZ() + offZ,
+                        0,0,0);
             }
         }
 

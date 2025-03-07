@@ -2,6 +2,7 @@ package net.turtleboi.aspects.network.payloads;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.Holder;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
@@ -20,19 +21,31 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.turtleboi.aspects.Aspects;
 import org.jetbrains.annotations.NotNull;
 
-public record ParticleData(ResourceLocation particleType, double x, double y, double z) implements CustomPacketPayload {
+public record ParticleData(ResourceLocation particleType, double x, double y, double z, Speed speed)
+        implements CustomPacketPayload {
+
+    public record Speed(double x, double y, double z) { }
+
+    public static final StreamCodec<FriendlyByteBuf, Speed> SPEED_CODEC =
+            StreamCodec.composite(
+                    ByteBufCodecs.DOUBLE, Speed::x,
+                    ByteBufCodecs.DOUBLE, Speed::y,
+                    ByteBufCodecs.DOUBLE, Speed::z,
+                    Speed::new
+            );
 
     public static final CustomPacketPayload.Type<ParticleData> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "particle_data"));
 
     public static final StreamCodec<FriendlyByteBuf, ParticleData> STREAM_CODEC =
             StreamCodec.composite(
-            ResourceLocation.STREAM_CODEC, ParticleData::particleType,
-            ByteBufCodecs.DOUBLE, ParticleData::x,
-            ByteBufCodecs.DOUBLE, ParticleData::y,
-            ByteBufCodecs.DOUBLE, ParticleData::z,
-            ParticleData::new
-    );
+                    ResourceLocation.STREAM_CODEC, ParticleData::particleType,
+                    ByteBufCodecs.DOUBLE, ParticleData::x,
+                    ByteBufCodecs.DOUBLE, ParticleData::y,
+                    ByteBufCodecs.DOUBLE, ParticleData::z,
+                    SPEED_CODEC, ParticleData::speed,
+                    ParticleData::new
+            );
 
     @Override
     public CustomPacketPayload.@NotNull Type<? extends CustomPacketPayload> type() {
@@ -53,7 +66,8 @@ public record ParticleData(ResourceLocation particleType, double x, double y, do
                     } else {
                         particle = ParticleTypes.EXPLOSION;
                     }
-                    world.addParticle(particle, data.x(), data.y(), data.z(), 0, 0, 0);
+                    Speed speed = data.speed();
+                    world.addParticle(particle, data.x(), data.y(), data.z(), speed.x(), speed.y(), speed.z());
                 }
             }
         }).exceptionally(e -> {
@@ -62,8 +76,17 @@ public record ParticleData(ResourceLocation particleType, double x, double y, do
         });
     }
 
-    public static void spawnParticle(ResourceLocation particleType, double x, double y, double z) {
-        ParticleData packet = new ParticleData(particleType, x, y, z);
+    public static void spawnParticle(ParticleOptions particleOptions, double x, double y, double z,double xSpeed,
+                                     double ySpeed, double zSpeed) {
+        ResourceLocation particleLocation = BuiltInRegistries.PARTICLE_TYPE.getKey(particleOptions.getType());
+        if (particleLocation == null) {
+            System.out.println("Particle event null!");
+            particleLocation = ResourceLocation.fromNamespaceAndPath("minecraft", "default_particle");
+        }
+        Speed speed = new Speed(xSpeed, ySpeed, zSpeed);
+        ParticleData packet = new ParticleData(particleLocation, x, y, z, speed);
         PacketDistributor.sendToAllPlayers(packet);
     }
+
+
 }

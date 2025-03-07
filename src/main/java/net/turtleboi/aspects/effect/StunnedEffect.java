@@ -42,10 +42,11 @@ public class StunnedEffect extends MobEffect {
             double offX = (pLivingEntity.level().random.nextDouble() - 0.5) * 0.5;
             double offZ = (pLivingEntity.level().random.nextDouble() - 0.5) * 0.5;
             ParticleData.spawnParticle(
-                    ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "stunned_particles"),
+                    ModParticles.STUNNED_PARTICLES.get(),
                     pLivingEntity.getX() + offX,
                     pLivingEntity.getY() + pLivingEntity.getBbHeight(),
-                    pLivingEntity.getZ() + offZ);
+                    pLivingEntity.getZ() + offZ,
+                    0,0,0);
         }
 
         int duration = Objects.requireNonNull(pLivingEntity.getEffect(ModEffects.STUNNED)).getDuration();
