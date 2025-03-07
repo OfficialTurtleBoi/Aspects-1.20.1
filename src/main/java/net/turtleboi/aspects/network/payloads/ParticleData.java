@@ -25,7 +25,8 @@ public record ParticleData(ResourceLocation particleType, double x, double y, do
     public static final CustomPacketPayload.Type<ParticleData> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "particle_data"));
 
-    public static final StreamCodec<FriendlyByteBuf, ParticleData> STREAM_CODEC = StreamCodec.composite(
+    public static final StreamCodec<FriendlyByteBuf, ParticleData> STREAM_CODEC =
+            StreamCodec.composite(
             ResourceLocation.STREAM_CODEC, ParticleData::particleType,
             ByteBufCodecs.DOUBLE, ParticleData::x,
             ByteBufCodecs.DOUBLE, ParticleData::y,

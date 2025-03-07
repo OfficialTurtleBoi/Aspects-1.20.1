@@ -3,20 +3,20 @@ package net.turtleboi.aspects.event;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
@@ -30,6 +30,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
 import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
@@ -39,15 +41,12 @@ import net.turtleboi.aspects.client.renderer.ColdAuraRenderer;
 import net.turtleboi.aspects.client.renderer.FireAuraRenderer;
 import net.turtleboi.aspects.effect.ModEffects;
 import net.turtleboi.aspects.item.ModItems;
+import net.turtleboi.aspects.network.payloads.FrozenData;
 import net.turtleboi.aspects.network.payloads.ParticleData;
 import net.turtleboi.aspects.potion.ModPotions;
-import net.turtleboi.aspects.util.AspectUtil;
-import net.turtleboi.aspects.util.ModAttributes;
-import net.turtleboi.aspects.util.ModDamageSources;
-import net.turtleboi.aspects.util.ModTags;
+import net.turtleboi.aspects.util.*;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @EventBusSubscriber(modid = Aspects.MOD_ID)
 public class   ModEvents {
@@ -56,7 +55,7 @@ public class   ModEvents {
         ItemStack left = event.getLeft();
         ItemStack right = event.getRight();
         String name = event.getName();
-        int i = 5;
+        int i = 30;
 
         if ((isRune(right)) && (left.getItem() instanceof ArmorItem)) {
             ItemStack output = left.copy();
@@ -278,40 +277,36 @@ public class   ModEvents {
                     maxDamage = (int) ((10 + (10 * (glaciusAmplifier / 4) * attackerArcaniFactor) / hurtArcaniFactor));
                 }
 
-                if (hurtEntity.getPersistentData().contains("FrozenBy")) {
-                    hurtEntity.getPersistentData().remove("FrozenBy");
-                    System.out.println("Dealing " + maxDamage + " damage to " + hurtEntity);
-                    hurtEntity.hurt(
-                            ModDamageSources.frozenDamage(
-                                    hurtEntity.level(),
-                                    null,
-                                    null),
-                            Math.min(maxDamage, entityMaxHealth / 4));
-                    hurtEntity.level().playSound(
-                            null,
-                            hurtEntity.getX(),
-                            hurtEntity.getY(),
-                            hurtEntity.getZ(),
-                            SoundEvents.GLASS_BREAK,
-                            SoundSource.AMBIENT,
-                            1.25F,
-                            0.4f / (hurtEntity.level().getRandom().nextFloat() * 0.4f + 0.8f)
-                    );
-
-                    double entitySize = hurtEntity.getBbHeight() * hurtEntity.getBbWidth();
-                    System.out.println("Spawning " + (entitySize * 60) + " particles for " + hurtEntity.getName());
-                    for (int i = 0; i < entitySize * 60; i++) {
-                        double offX = (hurtEntity.level().random.nextDouble() - 0.5) * 0.5;
-                        double offY = hurtEntity.getBbHeight() * hurtEntity.level().random.nextDouble();
-                        double offZ = (hurtEntity.level().random.nextDouble() - 0.5) * 0.5;
-                        ParticleOptions particle = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ICE.defaultBlockState());
-                        ResourceLocation particleKey = BuiltInRegistries.PARTICLE_TYPE.getKey(particle.getType());
-                        ParticleData.spawnParticle(
-                                particleKey,
-                                hurtEntity.getX() + offX,
-                                hurtEntity.getY() + offY,
-                                hurtEntity.getZ() + offZ);
-                    }
+                System.out.println("Dealing " + maxDamage + " damage to " + hurtEntity);
+                hurtEntity.hurt(
+                        ModDamageSources.frozenDamage(
+                                hurtEntity.level(),
+                                null,
+                                null),
+                        Math.min(maxDamage, entityMaxHealth / 4));
+                hurtEntity.level().playSound(
+                        null,
+                        hurtEntity.getX(),
+                        hurtEntity.getY(),
+                        hurtEntity.getZ(),
+                        SoundEvents.GLASS_BREAK,
+                        SoundSource.AMBIENT,
+                        1.25F,
+                        0.4f / (hurtEntity.level().getRandom().nextFloat() * 0.4f + 0.8f)
+                );
+                double entitySize = hurtEntity.getBbHeight() * hurtEntity.getBbWidth();
+                //System.out.println("Spawning " + (entitySize * 60) + " particles for " + hurtEntity.getName());
+                for (int i = 0; i < entitySize * 60; i++) {
+                    double offX = (hurtEntity.level().random.nextDouble() - 0.5) * 0.5;
+                    double offY = hurtEntity.getBbHeight() * hurtEntity.level().random.nextDouble();
+                    double offZ = (hurtEntity.level().random.nextDouble() - 0.5) * 0.5;
+                    ParticleOptions particle = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ICE.defaultBlockState());
+                    ResourceLocation particleKey = BuiltInRegistries.PARTICLE_TYPE.getKey(particle.getType());
+                    ParticleData.spawnParticle(
+                            particleKey,
+                            hurtEntity.getX() + offX,
+                            hurtEntity.getY() + offY,
+                            hurtEntity.getZ() + offZ);
                 }
             }
 
@@ -355,22 +350,22 @@ public class   ModEvents {
                         } else if (fireAspectLevel > 0){
                             ignitionTime = 80 * fireAspectLevel;
                         }
-                        System.out.println("Igniting " + hurtEntity.getName() + " for " + ignitionTime / 20 + " seconds");
+                        //System.out.println("Igniting " + hurtEntity.getName() + " for " + ignitionTime / 20 + " seconds");
                         if (playerArcaniFactor > 1) {
                             int upgradedTicks = (int) (ignitionTime * playerArcaniFactor);
                             if (livingEntity.isOnFire()) {
                                 int currentTicks = livingEntity.getRemainingFireTicks();
                                 livingEntity.setRemainingFireTicks(currentTicks + upgradedTicks);
-                                System.out.println(
-                                        "Increasing ignition time for " + hurtEntity.getName() + " to " +
-                                                (currentTicks + upgradedTicks) / 20 + " seconds"
-                                );
+                                //System.out.println(
+                                //        "Increasing ignition time for " + hurtEntity.getName() + " to " +
+                                //                (currentTicks + upgradedTicks) / 20 + " seconds"
+                                //);
                             } else {
                                 livingEntity.igniteForTicks(upgradedTicks);
-                                System.out.println(
-                                        "Increasing ignition time for " + hurtEntity.getName() + " to " +
-                                                (upgradedTicks) / 20 + " seconds"
-                                );
+                                //System.out.println(
+                                //        "Increasing ignition time for " + hurtEntity.getName() + " to " +
+                                //                (upgradedTicks) / 20 + " seconds"
+                                //);
                             }
                         }
                     }
@@ -412,12 +407,12 @@ public class   ModEvents {
                                 0.4f / (player.level().getRandom().nextFloat() * 0.4f + 0.8f)
                         );
                         setStunner(livingEntity, player);
-                        System.out.println(
-                                Component.translatable(
-                                        livingEntity.getName().getString()) +
-                                        " stunned by " + player + " for " +
-                                        (int) (((20 * tempestasAmplifier) * playerArcaniFactor) / hurtArcaniFactor) / 20 + " seconds!"
-                        );
+                        //System.out.println(
+                        //        Component.translatable(
+                        //                livingEntity.getName().getString()) +
+                        //                " stunned by " + player + " for " +
+                        //                (int) (((20 * tempestasAmplifier) * playerArcaniFactor) / hurtArcaniFactor) / 20 + " seconds!"
+                        //);
                         hurtEntity.addEffect(
                                 new MobEffectInstance(
                                         ModEffects.STUNNED,
@@ -445,13 +440,13 @@ public class   ModEvents {
         Entity sourceEntity = event.getEffectSource();
         MobEffectInstance effectInstance = event.getEffectInstance();
         MobEffectInstance oldInstance = event.getOldEffectInstance();
-        System.out.println(
-                Component.translatable(
-                        "Added Effect - " +
-                        livingEntity.getName() +
-                        " just got " +
-                        effectInstance.getDescriptionId() +
-                        " for " + effectInstance.getDuration() / 20 + " seconds"));
+        //System.out.println(
+        //        Component.translatable(
+        //                "Added Effect - " +
+        //                livingEntity.getName() +
+        //                " just got " +
+        //                effectInstance.getDescriptionId() +
+        //                " for " + effectInstance.getDuration() / 20 + " seconds"));
 
         double arcaniAmplifier = 0;
         if (sourceEntity instanceof Player player) {
@@ -507,9 +502,9 @@ public class   ModEvents {
             }
 
             int newDuration = (int) (effectInstance.getDuration() * multiplier);
-            System.out.println("Added Effect - Multiplier: " + multiplier);
+            //System.out.println("Added Effect - Multiplier: " + multiplier);
             if (multiplier > 1) {
-                System.out.println("Increasing potion duration by " + ((multiplier - 1) * 100) + "% and total duration: " + (newDuration / 20) + " seconds");
+                //System.out.println("Increasing potion duration by " + ((multiplier - 1) * 100) + "% and total duration: " + (newDuration / 20) + " seconds");
                 effectInstance.update(new MobEffectInstance(
                         effectInstance.getEffect(),
                         newDuration,

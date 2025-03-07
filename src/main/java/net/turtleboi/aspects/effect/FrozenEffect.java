@@ -12,6 +12,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+import net.turtleboi.aspects.network.payloads.FrozenData;
 import net.turtleboi.aspects.util.AttributeModifierUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +30,8 @@ public class FrozenEffect extends MobEffect {
 
     @Override
     public boolean applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
+        FrozenData.setFrozen(pLivingEntity, true);
+
         if (!pLivingEntity.level().isClientSide()) {
             if(pLivingEntity.hasEffect(ModEffects.CHILLED)){
                 pLivingEntity.removeEffect(ModEffects.CHILLED);
@@ -100,6 +103,12 @@ public class FrozenEffect extends MobEffect {
     @Override
     public boolean shouldApplyEffectTickThisTick(int pDuration, int pAmplifier) {
         return true;
+    }
+
+    @Override
+    public void onMobRemoved(LivingEntity livingEntity, int amplifier, Entity.RemovalReason reason) {
+        super.onMobRemoved(livingEntity, amplifier, reason);
+        FrozenData.setFrozen(livingEntity, false);
     }
 
     @Override
