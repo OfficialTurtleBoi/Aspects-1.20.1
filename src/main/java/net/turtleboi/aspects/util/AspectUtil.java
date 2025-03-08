@@ -29,6 +29,10 @@ public class AspectUtil {
     public static final String ARCANI_ASPECT = "arcani";
     public static final String UMBRE_ASPECT = "umbre";
 
+    public static boolean hasAspect(ItemStack stack) {
+        return stack.get(ModDataComponents.ASPECT_STRING) != null;
+    }
+
     public static void setAspect(ItemStack stack, String aspectName) {
         stack.set(ModDataComponents.ASPECT_STRING, aspectName);
     }
@@ -179,7 +183,7 @@ public class AspectUtil {
                                 armor.getDescriptionId() + UMBRE_ASPECT + "_infusion",
                                 1.0,
                                 AttributeModifier.Operation.ADD_VALUE);
-                        if (getAverageSurroundingLight(entity) <= 4 + entity.getAttribute(ModAttributes.UMBRE_ASPECT).getValue()) {
+                        if (getAverageSurroundingLight(entity) <= 0 + entity.getAttribute(ModAttributes.UMBRE_ASPECT).getValue()) {
                             if(!entity.hasEffect(MobEffects.NIGHT_VISION) || (entity.hasEffect(MobEffects.NIGHT_VISION) && entity.getEffect(MobEffects.NIGHT_VISION).getDuration() < 300)){
                                 entity.addEffect(new MobEffectInstance(
                                         MobEffects.NIGHT_VISION,

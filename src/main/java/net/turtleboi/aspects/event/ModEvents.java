@@ -496,7 +496,7 @@ public class   ModEvents {
                             hurtEntity.addEffect(
                                     new MobEffectInstance(
                                             ModEffects.SAPPED,
-                                            (int) (20 * umbreAmplifier * playerArcaniAmplifier),
+                                            (int) (200 * umbreAmplifier * playerArcaniAmplifier),
                                             0,
                                             false,
                                             true,
@@ -519,7 +519,7 @@ public class   ModEvents {
                             player.addEffect(
                                     new MobEffectInstance(
                                             ModEffects.VIGOR,
-                                            (int) (20 * umbreAmplifier * playerArcaniAmplifier),
+                                            (int) (200 * umbreAmplifier * playerArcaniAmplifier),
                                             0,
                                             false,
                                             true,

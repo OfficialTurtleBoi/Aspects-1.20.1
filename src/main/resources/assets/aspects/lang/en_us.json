@@ -5,6 +5,8 @@
   "effect.aspects.frozen": "Frozen",
   "effect.aspects.static": "Static",
   "effect.aspects.stunned": "Stunned",
+  "effect.aspects.sapped": "Sapped",
+  "effect.aspects.vigor": "Vigor",
 
   "item.aspects.infernum_rune": "Infernum Rune",
   "item.aspects.glacius_rune": "Glacius Rune",
