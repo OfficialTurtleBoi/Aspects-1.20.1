@@ -1,18 +1,25 @@
 package net.turtleboi.aspects.util;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
 import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.component.ModDataComponents;
 import net.turtleboi.aspects.item.ModItems;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class AspectUtil {
     public static final String INFERNUM_ASPECT = "infernum";
@@ -68,93 +75,156 @@ public class AspectUtil {
         };
     }
 
+    public static void setIgnitor(LivingEntity livingEntity, Entity ignitor){
+        if (!livingEntity.getPersistentData().contains("IgnitedBy")) {
+            //System.out.println(livingEntity + " ignited by " + ignitor + "!");
+            livingEntity.getPersistentData().putUUID("IgnitedBy", ignitor.getUUID());
+        }
+    }
+
+    public static void setChiller(LivingEntity livingEntity, Entity chiller){
+        if (!livingEntity.getPersistentData().contains("ChilledBy")) {
+            //System.out.println(livingEntity + " chilled by " + chiller + "!");
+            livingEntity.getPersistentData().putUUID("ChilledBy", chiller.getUUID());
+        }
+    }
+
+    public static void setFrozen(LivingEntity livingEntity, UUID uuid){
+        if (!livingEntity.getPersistentData().contains("FrozenBy")) {
+            //System.out.println(livingEntity + " was frozen by" + uuid.toString() + "!");
+            livingEntity.getPersistentData().putUUID("FrozenBy", uuid);
+        }
+    }
+
+    public static void setStunner(LivingEntity livingEntity, Entity stunner){
+        if (!livingEntity.getPersistentData().contains("StunnedBy")) {
+            //System.out.println(livingEntity + " stunned by " + stunner + "!");
+            livingEntity.getPersistentData().putUUID("StunnedBy", stunner.getUUID());
+        }
+    }
+
     public static void applyAspectAttributes(LivingEntity entity) {
         for (ItemStack armor : entity.getArmorSlots()) {
             String aspect = AspectUtil.getAspect(armor);
             if (aspect != null && !aspect.isEmpty()) {
                 switch (aspect) {
                     case INFERNUM_ASPECT:
+                        //System.out.println("Applying Infernum from " + armor.getDescriptionId());
                         AttributeModifierUtil.applyPermanentModifier(
                                 entity,
                                 ModAttributes.INFERNUM_ASPECT,
-                                armor.getDescriptionId() + "inferum_infusion",
+                                armor.getDescriptionId() + INFERNUM_ASPECT + "inferum_infusion",
                                 1.0,
-                                AttributeModifier.Operation.ADD_VALUE);
-                        AttributeModifierUtil.applyPermanentModifier(
-                                entity,
-                                Attributes.MAX_HEALTH,
-                                armor.getDescriptionId() + "infernum_health_infusion",
-                                2.0,
                                 AttributeModifier.Operation.ADD_VALUE);
                         break;
                     case GLACIUS_ASPECT:
+                        //System.out.println("Applying Glacius from " + armor.getDescriptionId());
                         AttributeModifierUtil.applyPermanentModifier(
                                 entity,
                                 ModAttributes.GLACIUS_ASPECT,
-                                armor.getDescriptionId() + "glacius_infusion",
+                                armor.getDescriptionId() + GLACIUS_ASPECT +"_infusion",
                                 1.0,
                                 AttributeModifier.Operation.ADD_VALUE);
                         AttributeModifierUtil.applyPermanentModifier(
                                 entity,
                                 Attributes.MAX_HEALTH,
-                                armor.getDescriptionId() + "glacius_health_infusion",
+                                armor.getDescriptionId() + GLACIUS_ASPECT +"_health_infusion",
                                 2.0,
                                 AttributeModifier.Operation.ADD_VALUE);
                         break;
                     case TERRA_ASPECT:
+                        //System.out.println("Applying Terra from " + armor.getDescriptionId());
                         AttributeModifierUtil.applyPermanentModifier(
                                 entity,
                                 ModAttributes.TERRA_ASPECT,
-                                armor.getDescriptionId() + "terra_infusion",
+                                armor.getDescriptionId() + TERRA_ASPECT + "_infusion",
                                 1.0,
                                 AttributeModifier.Operation.ADD_VALUE);
                         AttributeModifierUtil.applyPermanentModifier(
                                 entity,
                                 Attributes.ARMOR,
-                                armor.getDescriptionId() + "terra_armor_infusion",
-                                3.0,
+                                armor.getDescriptionId() + TERRA_ASPECT + "_armor_infusion",
+                                2.0,
                                 AttributeModifier.Operation.ADD_VALUE);
                         break;
                     case TEMPESTAS_ASPECT:
+                        //System.out.println("Applying Glacius from " + armor.getDescriptionId());
                         AttributeModifierUtil.applyPermanentModifier(
                                 entity,
                                 ModAttributes.TEMPESTUS_ASPECT,
-                                armor.getDescriptionId() + "tempestas_infusion",
+                                armor.getDescriptionId() + TEMPESTAS_ASPECT + "_infusion",
                                 1.0,
                                 AttributeModifier.Operation.ADD_VALUE);
                         AttributeModifierUtil.applyPermanentModifier(
                                 entity,
-                                Attributes.MINING_EFFICIENCY,
-                                armor.getDescriptionId() + "tempestas_mining_efficiency_infusion",
-                                0.5,
-                                AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+                                Attributes.ATTACK_KNOCKBACK,
+                                armor.getDescriptionId() + TEMPESTAS_ASPECT + "_knockback_infusion",
+                                0.25,
+                                AttributeModifier.Operation.ADD_VALUE);
                         break;
                     case ARCANI_ASPECT:
+                        //System.out.println("Applying Arcani from " + armor.getDescriptionId());
                         AttributeModifierUtil.applyPermanentModifier(
                                 entity,
                                 ModAttributes.ARCANI_ASPECT,
-                                armor.getDescriptionId() + "arcani_infusion",
+                                armor.getDescriptionId() + ARCANI_ASPECT + "_infusion",
                                 1.0,
                                 AttributeModifier.Operation.ADD_VALUE);
                         break;
                     case UMBRE_ASPECT:
+                        //System.out.println("Applying Umbre from " + armor.getDescriptionId());
                         AttributeModifierUtil.applyPermanentModifier(
                                 entity,
                                 ModAttributes.UMBRE_ASPECT,
-                                armor.getDescriptionId() + "umbre_infusion",
+                                armor.getDescriptionId() + UMBRE_ASPECT + "_infusion",
                                 1.0,
                                 AttributeModifier.Operation.ADD_VALUE);
-                        AttributeModifierUtil.applyPermanentModifier(
-                                entity,
-                                Attributes.ATTACK_SPEED,
-                                armor.getDescriptionId() + "umbre_attack_speed_infusion",
-                                0.2,
-                                AttributeModifier.Operation.ADD_VALUE);
-                        AttributeModifierUtil.applyPermanentModifier(entity,
-                                Attributes.MOVEMENT_SPEED,
-                                armor.getDescriptionId() + "umbre_speed_infusion",
-                                0.05,
-                                AttributeModifier.Operation.ADD_VALUE);
+                        if (getAverageSurroundingLight(entity) <= 4 + entity.getAttribute(ModAttributes.UMBRE_ASPECT).getValue()) {
+                            if(!entity.hasEffect(MobEffects.NIGHT_VISION) || (entity.hasEffect(MobEffects.NIGHT_VISION) && entity.getEffect(MobEffects.NIGHT_VISION).getDuration() < 300)){
+                                entity.addEffect(new MobEffectInstance(
+                                        MobEffects.NIGHT_VISION,
+                                        600,
+                                        0,
+                                        true,
+                                        true,
+                                        true
+                                ));
+                            }
+                            AttributeModifierUtil.applyPermanentModifier(
+                                    entity,
+                                    Attributes.ATTACK_SPEED,
+                                    armor.getDescriptionId() + UMBRE_ASPECT + "_attack_speed_infusion",
+                                    0.2,
+                                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+                            AttributeModifierUtil.applyPermanentModifier(
+                                    entity,
+                                    Attributes.MOVEMENT_SPEED,
+                                    armor.getDescriptionId() + UMBRE_ASPECT + "_speed_infusion",
+                                    0.1,
+                                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+                            AttributeModifierUtil.applyPermanentModifier(
+                                    entity,
+                                    Attributes.MINING_EFFICIENCY,
+                                    armor.getDescriptionId() + UMBRE_ASPECT + "_mining_speed_infusion",
+                                    8,
+                                    AttributeModifier.Operation.ADD_VALUE);
+                        } else {
+                            AttributeModifierUtil.removeModifier(
+                                    entity,
+                                    Attributes.ATTACK_SPEED,
+                                    armor.getDescriptionId() + UMBRE_ASPECT + "_attack_speed_infusion"
+                            );
+                            AttributeModifierUtil.removeModifier(
+                                    entity,
+                                    Attributes.MOVEMENT_SPEED,
+                                    armor.getDescriptionId() + UMBRE_ASPECT + "_speed_infusion"
+                            );
+                            AttributeModifierUtil.removeModifier(
+                                    entity,
+                                    Attributes.MOVEMENT_SPEED,
+                                    armor.getDescriptionId() + UMBRE_ASPECT + "_mining_speed_infusion"
+                            );
+                        }
                         break;
                 }
             }
@@ -179,5 +249,11 @@ public class AspectUtil {
     public static void updateAspectAttributes(LivingEntity entity) {
         clearAspectAttributes(entity);
         applyAspectAttributes(entity);
+    }
+
+    public static float getAverageSurroundingLight(LivingEntity entity) {
+        Level level = entity.level();
+        BlockPos playerPos = new BlockPos((int) entity.getX(), (int) entity.getEyeY(), (int) entity.getZ());
+        return level.getMaxLocalRawBrightness(playerPos);
     }
 }

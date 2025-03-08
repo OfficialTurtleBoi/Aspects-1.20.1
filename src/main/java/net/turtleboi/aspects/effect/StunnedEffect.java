@@ -19,6 +19,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.aspects.Aspects;
+import net.turtleboi.aspects.event.ModEvents;
 import net.turtleboi.aspects.network.payloads.ParticleData;
 import net.turtleboi.aspects.particle.ModParticles;
 import net.turtleboi.aspects.util.AspectUtil;
@@ -31,12 +32,19 @@ import java.util.*;
 public class StunnedEffect extends MobEffect {
     private final String attributeModifierName = "stunned_movement_speed";
     public static final Map<UUID, StunPlayerData> stunnedPlayers = new HashMap<>();
+    private final List<LivingEntity> storedEntities = new ArrayList<>();
+
     public StunnedEffect(MobEffectCategory mobEffectCategory, int color) {
         super(mobEffectCategory, color);
     }
 
     @Override
     public boolean applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
+        Player stunningPlayer = null;
+        if (pLivingEntity.getPersistentData().hasUUID("StunnedBy")) {
+            stunningPlayer = pLivingEntity.level().getPlayerByUUID(pLivingEntity.getPersistentData().getUUID("StunnedBy"));
+        }
+
         if (!pLivingEntity.level().isClientSide &&
                 (pLivingEntity.tickCount % 20 == 0 || pLivingEntity.tickCount % 18 == 0 || pLivingEntity.tickCount % 16 == 0)){
             double offX = (pLivingEntity.level().random.nextDouble() - 0.5) * 0.5;
@@ -119,7 +127,7 @@ public class StunnedEffect extends MobEffect {
                 mob.setJumping(false);
                 mob.getNavigation().stop();
             }
-        } else if (duration <= 2){
+        } else if (duration <= 3){
             //System.out.println("Unstunning: " + pLivingEntity);
             if (pLivingEntity instanceof Player player) {
                 stunnedPlayers.remove(player.getUUID());
@@ -132,48 +140,68 @@ public class StunnedEffect extends MobEffect {
                 mob.setNoAi(false);
                 mob.hurtMarked = true;
             }
-        }
 
-        if(pLivingEntity.getEffect(ModEffects.STUNNED).getDuration() == 1 && pAmplifier >= 3){
-            Level level = pLivingEntity.level();
-            if (level instanceof ServerLevel serverLevel) {
-                LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, serverLevel);
-                lightning.setPos(pLivingEntity.getX(), pLivingEntity.getY(), pLivingEntity.getZ());
-                serverLevel.addFreshEntity(lightning);
-            }
-        }
-
-        int randomint = pLivingEntity.level().random.nextInt(100);
-
-        if (randomint<80) {
-            AABB area = new AABB(pLivingEntity.getX() - 4, pLivingEntity.getY() - 4, pLivingEntity.getZ() - 4,
-                    pLivingEntity.getX() + 4, pLivingEntity.getY() + 4, pLivingEntity.getZ() + 4);
-
-            List<LivingEntity> entities = pLivingEntity.level().getEntitiesOfClass(LivingEntity.class, area, e -> e != pLivingEntity && !(e instanceof Player));
-            if (!entities.isEmpty()){
-                if (randomint<10){
-                    LivingEntity chosen = entities.get(pLivingEntity.level().getRandom().nextInt(entities.size()));
-                    if (!storedEntities.contains(chosen)) {
-                        storedEntities.add(chosen);
+            if (stunningPlayer != null && stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT).getValue() > 0) {
+                double arcaniAmplifier = stunningPlayer.getAttributeValue(ModAttributes.ARCANI_ASPECT);
+                Level level = pLivingEntity.level();
+                if (level instanceof ServerLevel serverLevel) {
+                    for (int i = 0; i < (arcaniAmplifier / 2); i++) {
+                        LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, serverLevel);
+                        lightning.setPos(pLivingEntity.getX(), pLivingEntity.getY(), pLivingEntity.getZ());
+                        serverLevel.addFreshEntity(lightning);
                     }
                 }
 
-                for (LivingEntity target : storedEntities) {
-                    Vec3 direction = new Vec3(pLivingEntity.getX() - target.getX(), pLivingEntity.getY() - target.getY(), pLivingEntity.getZ() - target.getZ());
-                    direction = direction.normalize().scale(0.5); // Adjust speed
-
-                    target.setDeltaMovement(direction);
-                    target.hurtMarked = true; // Ensures movement updates visually
+                if (pLivingEntity.getPersistentData().hasUUID("StunnedBy")){
+                    AABB ignitionArea = new AABB(pLivingEntity.getX() - 0.5, pLivingEntity.getY() - 0.5, pLivingEntity.getZ() - 0.5,
+                            pLivingEntity.getX() + 0.5, pLivingEntity.getY() + 0.5, pLivingEntity.getZ() + 0.5);
+                    List<LivingEntity> ignitedEntities = pLivingEntity.level().getEntitiesOfClass(LivingEntity.class, ignitionArea, e -> e != pLivingEntity && !(e instanceof Player));
+                    for (LivingEntity ignitedEntity : ignitedEntities) {
+                        AspectUtil.setIgnitor(ignitedEntity, pLivingEntity.level().getPlayerByUUID(pLivingEntity.getPersistentData().getUUID("StunnedBy")));
+                    }
                 }
+            }
         }
-}
 
+        if (stunningPlayer != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT).getValue() > 0) {
+            double umbreAmplifier = stunningPlayer.getAttributeValue(ModAttributes.UMBRE_ASPECT);
 
+            int randomInt = pLivingEntity.level().random.nextInt(100);
+            if (randomInt < (50 * (1 + (umbreAmplifier / 4)))) {
+                AABB area = new AABB(pLivingEntity.getX() - (4 * (1 + umbreAmplifier)), pLivingEntity.getY() - (4 * (1 + umbreAmplifier)), pLivingEntity.getZ() - (4 * (1 + umbreAmplifier)),
+                        pLivingEntity.getX() + (4 * (1 + umbreAmplifier)), pLivingEntity.getY() + (4 * (1 + umbreAmplifier)), pLivingEntity.getZ() + (4 * (1 + umbreAmplifier)));
+                List<LivingEntity> entities = pLivingEntity.level().getEntitiesOfClass(LivingEntity.class, area, e -> e != pLivingEntity && !(e instanceof Player));
+                if (!entities.isEmpty()) {
+                    if (randomInt < (25 * (1 + (umbreAmplifier / 4)))) {
+                        LivingEntity chosen = entities.get(pLivingEntity.level().getRandom().nextInt(entities.size()));
+                        if (!storedEntities.contains(chosen)) {
+                            storedEntities.add(chosen);
+                        }
+                    }
+                    if (duration >= 3) {
+                        for (LivingEntity target : storedEntities) {
+                            Vec3 direction = new Vec3(pLivingEntity.getX() - target.getX(), pLivingEntity.getY() - target.getY(), pLivingEntity.getZ() - target.getZ());
+                            direction = direction.normalize().scale(0.75);
+                            target.setDeltaMovement(direction);
+                            target.hurtMarked = true;
+                        }
+                    }
+                }
+            }
 
-
+            if (duration < 3) {
+                for (LivingEntity target : storedEntities) {
+                    double throwAngle = (pLivingEntity.level().getRandom().nextDouble() * (1 + (umbreAmplifier / 4)));
+                    Vec3 direction = new Vec3(pLivingEntity.getX() - target.getX(), pLivingEntity.getY() - (target.getY() + throwAngle), pLivingEntity.getZ() - target.getZ());
+                    direction = direction.normalize().scale(-(1 + (umbreAmplifier / 4)) * pLivingEntity.level().getRandom().nextDouble());
+                    target.setDeltaMovement(direction);
+                    target.hurtMarked = true;
+                }
+            }
+        }
         return super.applyEffectTick(pLivingEntity, pAmplifier);
     }
-    private final List<LivingEntity> storedEntities = new ArrayList<>();
+
 
     @Override
     public boolean shouldApplyEffectTickThisTick(int pDuration, int pAmplifier) {

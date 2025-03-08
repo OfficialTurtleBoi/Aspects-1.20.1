@@ -14,7 +14,7 @@ public class ModBlockEntities{
             DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, Aspects.MOD_ID);
 
     public static final Supplier<BlockEntityType<PedestalBlockEntity>> PEDESTAL_BE =
-            BLOCK_ENTITIES.register("aura_cube_be", () -> BlockEntityType.Builder.of(
+            BLOCK_ENTITIES.register("pedestal_be", () -> BlockEntityType.Builder.of(
                     PedestalBlockEntity::new, ModBlocks.PEDESTAL.get()).build(null));
 
     public static void register(IEventBus eventBus){
