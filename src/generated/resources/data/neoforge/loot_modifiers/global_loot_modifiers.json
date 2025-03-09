@@ -1,0 +1,11 @@
+{
+  "entries": [
+    "aspects:arcani_rune_from_mobs",
+    "aspects:glacius_rune_from_mobs",
+    "aspects:tempestas_rune_from_mobs",
+    "aspects:infernum_rune_from_mobs",
+    "aspects:umbre_rune_from_mobs",
+    "aspects:terra_rune_from_mobs"
+  ],
+  "replace": false
+}

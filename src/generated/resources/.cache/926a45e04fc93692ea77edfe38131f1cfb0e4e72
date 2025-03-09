@@ -1,0 +1,8 @@
+// 1.21.1	2025-03-09T17:58:34.715105	Global Loot Modifiers : aspects
+21cfc443ff39a72c89b1e0b155b48e8bbae3c465 data/aspects/loot_modifiers/arcani_rune_from_mobs.json
+caea0fcefe6cf7e0f5da0db9b07889d739b3a267 data/aspects/loot_modifiers/glacius_rune_from_mobs.json
+9100fde42f656a3697beada47dae953003661c79 data/aspects/loot_modifiers/infernum_rune_from_mobs.json
+01cc1b794bbfdb10f58c29a7862a89348ebc5fdb data/aspects/loot_modifiers/tempestas_rune_from_mobs.json
+06c99628c826588d91c01dce74d624e02a2091dd data/aspects/loot_modifiers/terra_rune_from_mobs.json
+9e8f9257522b4dfbf14d9ea75e747e0dd8331df0 data/aspects/loot_modifiers/umbre_rune_from_mobs.json
+c53f0b589866b40372d768c8b55f5a80c1ea2cf1 data/neoforge/loot_modifiers/global_loot_modifiers.json
