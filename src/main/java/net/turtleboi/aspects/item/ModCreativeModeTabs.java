@@ -26,7 +26,7 @@ public class ModCreativeModeTabs {
                         output.accept(ModItems.ARCANI_RUNE);
                         output.accept(ModItems.UMBRE_RUNE);
 
-                        output.accept(ModBlocks.RUNE_BLOCK);
+                        //output.accept(ModBlocks.RUNE_BLOCK);
                     }).build());
 
     public static void register(IEventBus eventBus){

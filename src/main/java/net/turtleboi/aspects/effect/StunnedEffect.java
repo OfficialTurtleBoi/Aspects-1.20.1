@@ -1,8 +1,12 @@
 package net.turtleboi.aspects.effect;
 
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -19,6 +23,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.aspects.Aspects;
+import net.turtleboi.aspects.client.renderer.ColdAuraRenderer;
 import net.turtleboi.aspects.entity.ModEntities;
 import net.turtleboi.aspects.entity.entities.SingularityEntity;
 import net.turtleboi.aspects.event.ModEvents;
@@ -124,36 +129,96 @@ public class StunnedEffect extends MobEffect {
                 mob.hurtMarked = true;
             }
 
-            if (stunningPlayer != null && stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT).getValue() > 0) {
-                double arcaniAmplifier = stunningPlayer.getAttributeValue(ModAttributes.ARCANI_ASPECT);
-                Level level = pLivingEntity.level();
-                if (level instanceof ServerLevel serverLevel && duration <= 1) {
-                    for (int i = 0; i < (arcaniAmplifier / 2); i++) {
-                        LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, serverLevel);
-                        lightning.setPos(pLivingEntity.getX(), pLivingEntity.getY(), pLivingEntity.getZ());
-                        serverLevel.addFreshEntity(lightning);
-                    }
+            if(stunningPlayer != null) {
+                double arcaniAmplifier = 0;
+                if (stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                    arcaniAmplifier = stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
                 }
 
-                if (pLivingEntity.getPersistentData().hasUUID("StunnedBy")){
+                if (stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT).getValue() > 0) {
+                    Level level = pLivingEntity.level();
+                    if (level instanceof ServerLevel serverLevel && duration <= 1) {
+                        for (int i = 0; i < (arcaniAmplifier / 2); i++) {
+                            LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, serverLevel);
+                            lightning.setPos(pLivingEntity.getX(), pLivingEntity.getY(), pLivingEntity.getZ());
+                            serverLevel.addFreshEntity(lightning);
+                        }
+
+                        if (stunningPlayer.getAttribute(ModAttributes.INFERNUM_ASPECT) != null) {
+                            AABB ignitionArea = new AABB(pLivingEntity.getX() - 2, pLivingEntity.getY() - 2, pLivingEntity.getZ() - 2,
+                                    pLivingEntity.getX() + 2, pLivingEntity.getY() + 2, pLivingEntity.getZ() + 2);
+                            List<LivingEntity> ignitedEntities = pLivingEntity.level().getEntitiesOfClass(LivingEntity.class, ignitionArea, e -> e != pLivingEntity && !(e instanceof Player));
+                            for (LivingEntity ignitedEntity : ignitedEntities) {
+                                AspectUtil.setIgnitor(ignitedEntity, stunningPlayer);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if(stunningPlayer != null) {
+            double arcaniAmplifier = 0;
+            if (stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                arcaniAmplifier = stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+            }
+            double arcaneFactor = 1 + (arcaniAmplifier / 4.0);
+
+            if (stunningPlayer.getAttribute(ModAttributes.GLACIUS_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.GLACIUS_ASPECT).getValue() > 0) {
+                double glaciusAmplifier = stunningPlayer.getAttributeValue(ModAttributes.GLACIUS_ASPECT);
+                if (pLivingEntity.tickCount % 20 == 0) {
+                    ColdAuraRenderer.addAuraForEntity(pLivingEntity, System.currentTimeMillis(), 30, glaciusAmplifier);
+                    pLivingEntity.level().playSound(
+                            null,
+                            pLivingEntity.getX(),
+                            pLivingEntity.getY(),
+                            pLivingEntity.getZ(),
+                            SoundEvents.PLAYER_HURT_FREEZE,
+                            SoundSource.HOSTILE,
+                            1.0F,
+                            0.4f / (pLivingEntity.level().getRandom().nextFloat() * 0.4f + 0.8f)
+                    );
+                    RandomSource random = pLivingEntity.level().getRandom();
+                    int count = (int) ((glaciusAmplifier + 1) * 20);
+                    for (int i = 0; i < count; i++) {
+                        double theta = random.nextDouble() * Math.PI;
+                        double phi = random.nextDouble() * 2 * Math.PI;
+                        double speed = 0.2 + random.nextDouble() * 0.3;
+                        double xSpeed = speed * Math.sin(theta) * Math.cos(phi);
+                        double ySpeed = speed * Math.cos(theta);
+                        double zSpeed = speed * Math.sin(theta) * Math.sin(phi);
+                        double offX = (random.nextDouble() - 0.5) * 0.2;
+                        double offY = pLivingEntity.getBbHeight() / 2;
+                        double offZ = (random.nextDouble() - 0.5) * 0.2;
+
+                        ParticleData.spawnParticle(
+                                ParticleTypes.SNOWFLAKE,
+                                pLivingEntity.getX() + offX,
+                                pLivingEntity.getY() + offY,
+                                pLivingEntity.getZ() + offZ,
+                                xSpeed,ySpeed,zSpeed);
+                    }
                     AABB ignitionArea = new AABB(pLivingEntity.getX() - 2, pLivingEntity.getY() - 2, pLivingEntity.getZ() - 2,
                             pLivingEntity.getX() + 2, pLivingEntity.getY() + 2, pLivingEntity.getZ() + 2);
-                    List<LivingEntity> ignitedEntities = pLivingEntity.level().getEntitiesOfClass(LivingEntity.class, ignitionArea, e -> e != pLivingEntity && !(e instanceof Player));
-                    for (LivingEntity ignitedEntity : ignitedEntities) {
-                        AspectUtil.setIgnitor(ignitedEntity, pLivingEntity.level().getPlayerByUUID(pLivingEntity.getPersistentData().getUUID("StunnedBy")));
+                    List<LivingEntity> chilledEntities = pLivingEntity.level().getEntitiesOfClass(LivingEntity.class, ignitionArea, e -> e != pLivingEntity && !(e instanceof Player));
+                    for (LivingEntity chilledEntity : chilledEntities) {
+                        AspectUtil.setChiller(chilledEntity, stunningPlayer);
+                        int chillTicks = (int) ((40 * glaciusAmplifier) * arcaneFactor);
+                        chilledEntity.addEffect(new MobEffectInstance(ModEffects.CHILLED, chillTicks, (int) glaciusAmplifier - 1));
                     }
+                }
+            }
+
+            if (stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT).getValue() > 0) {
+                if (duration == 1){
+                    SingularityEntity blackHole = new SingularityEntity(ModEntities.SINGULARITY.get(), pLivingEntity.level());
+                    blackHole.setOwner(pLivingEntity);
+                    blackHole.setPos(pLivingEntity.getX(), pLivingEntity.getY() + pLivingEntity.getBbHeight(), pLivingEntity.getZ());
+                    pLivingEntity.level().addFreshEntity(blackHole);
                 }
             }
         }
 
-        if (stunningPlayer != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT).getValue() > 0) {
-            if (duration == 1){
-                SingularityEntity blackHole = new SingularityEntity(ModEntities.SINGULARITY.get(), pLivingEntity.level());
-                blackHole.setOwner(pLivingEntity);
-                blackHole.setPos(pLivingEntity.getX(), pLivingEntity.getY() + pLivingEntity.getBbHeight(), pLivingEntity.getZ());
-                pLivingEntity.level().addFreshEntity(blackHole);
-            }
-        }
         return super.applyEffectTick(pLivingEntity, pAmplifier);
     }
 

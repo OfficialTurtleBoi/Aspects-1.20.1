@@ -11,6 +11,7 @@ import net.turtleboi.aspects.effect.ModEffects;
 import net.turtleboi.aspects.entity.ModEntities;
 import net.turtleboi.aspects.item.ModCreativeModeTabs;
 import net.turtleboi.aspects.item.ModItems;
+import net.turtleboi.aspects.loot.ModLootModifiers;
 import net.turtleboi.aspects.particle.ChilledParticles;
 import net.turtleboi.aspects.particle.ModParticles;
 import net.turtleboi.aspects.particle.StunnedParticles;
@@ -56,6 +57,8 @@ public class Aspects {
         ModEffects.register(modEventBus);
         ModPotions.register(modEventBus);
         ModParticles.register(modEventBus);
+
+        ModLootModifiers.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
 

@@ -7,12 +7,15 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringUtil;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
@@ -38,6 +41,7 @@ import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.client.renderer.ArcaneAuraRenderer;
 import net.turtleboi.aspects.client.renderer.ColdAuraRenderer;
 import net.turtleboi.aspects.client.renderer.FireAuraRenderer;
+import net.turtleboi.aspects.client.renderer.ShockwaveRenderer;
 import net.turtleboi.aspects.effect.ModEffects;
 import net.turtleboi.aspects.item.ModItems;
 import net.turtleboi.aspects.network.payloads.ParticleData;
@@ -205,6 +209,68 @@ public class   ModEvents {
                     attacker.addEffect(new MobEffectInstance(ModEffects.CHILLED, chillTicks, (int) glaciusAmplifier - 1));
                 }
             }
+
+            if (player.getAttribute(ModAttributes.TERRA_ASPECT) != null) {
+                double terraAmplifier = player.getAttributeValue(ModAttributes.TERRA_ASPECT);
+                if (terraAmplifier > 0) {
+                    if (player.getAttribute(ModAttributes.TEMPESTUS_ASPECT) != null) {
+                        double tempestasAmplifier = player.getAttributeValue(ModAttributes.TEMPESTUS_ASPECT);
+                        if (tempestasAmplifier > 0 && player.level().getRandom().nextDouble() < 1 + (0.05 * ((terraAmplifier + tempestasAmplifier) * arcaneFactor))) {
+                            ShockwaveRenderer.triggerShockwave(player, (int) ((terraAmplifier + tempestasAmplifier) * arcaneFactor));
+
+                            AABB area = new AABB(
+                                    player.getX() - ((terraAmplifier + tempestasAmplifier) * arcaneFactor),
+                                    player.getY() - ((terraAmplifier + tempestasAmplifier) * arcaneFactor),
+                                    player.getZ() - ((terraAmplifier + tempestasAmplifier) * arcaneFactor),
+                                    player.getX() + ((terraAmplifier + tempestasAmplifier) * arcaneFactor),
+                                    player.getY() + ((terraAmplifier + tempestasAmplifier) * arcaneFactor),
+                                    player.getZ() + ((terraAmplifier + tempestasAmplifier) * arcaneFactor));
+                            List<LivingEntity> entities = player.level().getEntitiesOfClass(LivingEntity.class, area, e -> e != player);
+                            if (!entities.isEmpty()) {
+                                for (LivingEntity target : entities) {
+                                    double dx = player.getX() - target.getX();
+                                    double dz = player.getZ() - target.getZ();
+                                    double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+
+                                    double knockbackFactor = 1.0 / (horizontalDistance + 0.5);
+                                    double maxStrength = (terraAmplifier + tempestasAmplifier) * arcaneFactor;
+                                    double horizontalStrength = maxStrength * knockbackFactor * (0.9 + player.level().getRandom().nextDouble() * 0.2);
+
+                                    double normX = horizontalDistance != 0 ? dx / horizontalDistance : 0;
+                                    double normZ = horizontalDistance != 0 ? dz / horizontalDistance : 0;
+
+                                    double baseVertical = 0.1;
+                                    double maxDistance = 5.0;
+                                    double verticalBonus = maxStrength * 0.5 * (1.0 - Mth.clamp(horizontalDistance / maxDistance, 0, 1));
+                                    verticalBonus *= (0.9 + player.level().getRandom().nextDouble() * 0.2);
+                                    double verticalStrength = baseVertical + verticalBonus;
+
+                                    Vec3 knockback = new Vec3(-normX * horizontalStrength, verticalStrength, -normZ * horizontalStrength);
+                                    target.setDeltaMovement(knockback);
+                                    target.hurtMarked = true;
+                                }
+                            }
+
+                            SoundData.spawnSound(
+                                    SoundEvents.DRAGON_FIREBALL_EXPLODE,
+                                    player.getX(),
+                                    player.getY(),
+                                    player.getZ(),
+                                    1.25F,
+                                    0.4f / (player.level().getRandom().nextFloat() * 0.4f + 0.8f)
+                            );
+                            SoundData.spawnSound(
+                                    SoundEvents.LIGHTNING_BOLT_THUNDER,
+                                    player.getX(),
+                                    player.getY(),
+                                    player.getZ(),
+                                    1.25F,
+                                    0.4f / (player.level().getRandom().nextFloat() * 0.4f + 0.8f)
+                            );
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -324,7 +390,51 @@ public class   ModEvents {
                             if (player.getAttribute(ModAttributes.UMBRE_ASPECT) != null && player.getAttributeValue(ModAttributes.UMBRE_ASPECT) > 0) {
                                 double umbreAmplifier = player.getAttributeValue(ModAttributes.UMBRE_ASPECT);
                                 if (event.getSource().type() == player.level().damageSources().onFire().type()) {
-                                    player.heal((float) Math.max(1, (event.getOriginalDamage() + (((1f * (infernumAmplifier)) * playerArcaniFactor) / hurtArcaniFactor)) * (0.1 * umbreAmplifier)));
+                                    player.heal(
+                                            (float) Math.max(1, (
+                                                    event.getOriginalDamage() + (((1f * (infernumAmplifier)) * playerArcaniFactor) / hurtArcaniFactor)) * (0.1 * umbreAmplifier)));
+                                }
+                            }
+
+                            if (player.getAttribute(ModAttributes.TERRA_ASPECT) != null) {
+                                double terraAmplifier = player.getAttributeValue(ModAttributes.TERRA_ASPECT);
+                                if (terraAmplifier > 0) {
+                                    if (!player.hasEffect(MobEffects.ABSORPTION)) {
+                                        //System.out.println("Adding Scorched Earth absorption!");
+                                        player.addEffect(
+                                                new MobEffectInstance(
+                                                        MobEffects.ABSORPTION,
+                                                        (int) (200 * terraAmplifier * playerArcaniFactor),
+                                                        0,
+                                                        false,
+                                                        true,
+                                                        true
+                                                ));
+                                    } else if (player.hasEffect(MobEffects.ABSORPTION)) {
+                                        if (player.getEffect(MobEffects.ABSORPTION).getAmplifier() < (1 + ((terraAmplifier * infernumAmplifier) * playerArcaniFactor))) {
+                                            int newAmplifier = player.getEffect(MobEffects.ABSORPTION).getAmplifier() + 1;
+                                            int newDuration = player.getEffect(MobEffects.ABSORPTION).getDuration() + (int) (200 * terraAmplifier * playerArcaniFactor);
+                                            player.addEffect(new MobEffectInstance(
+                                                    MobEffects.ABSORPTION,
+                                                    newDuration,
+                                                    newAmplifier,
+                                                    false,
+                                                    true,
+                                                    true
+                                            ));
+                                        } else if (player.getEffect(MobEffects.ABSORPTION).getAmplifier() >= (1 + ((terraAmplifier * infernumAmplifier) * playerArcaniFactor))) {
+                                            int sameAmplifier = player.getEffect(MobEffects.ABSORPTION).getAmplifier();
+                                            int sameDuration = player.getEffect(MobEffects.ABSORPTION).getDuration() + (int) (200 * terraAmplifier * playerArcaniFactor);
+                                            player.addEffect(new MobEffectInstance(
+                                                    MobEffects.ABSORPTION,
+                                                    sameDuration,
+                                                    sameAmplifier,
+                                                    false,
+                                                    true,
+                                                    true
+                                            ));
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -791,15 +901,17 @@ public class   ModEvents {
             //System.out.println("Added Effect - Multiplier: " + multiplier);
             if (multiplier > 1) {
                 if (livingEntity instanceof Player player) {
-                    ArcaneAuraRenderer.addAuraForEntity(player, System.currentTimeMillis(), 20, 1);
-                    SoundData.spawnSound(
-                            SoundEvents.ILLUSIONER_CAST_SPELL,
-                            player.getX(),
-                            player.getY(),
-                            player.getZ(),
-                            1.5F,
-                            0.4f / (player.level().getRandom().nextFloat() * 0.4f + 0.8f)
-                    );
+                    if (oldInstance == null || oldInstance.getEffect() != effectInstance.getEffect()) {
+                        ArcaneAuraRenderer.addAuraForEntity(player, System.currentTimeMillis(), 20, 1);
+                        SoundData.spawnSound(
+                                SoundEvents.ILLUSIONER_CAST_SPELL,
+                                player.getX(),
+                                player.getY(),
+                                player.getZ(),
+                                1.5F,
+                                0.4f / (player.level().getRandom().nextFloat() * 0.4f + 0.8f)
+                        );
+                    }
                 }
                 //System.out.println("[" + System.currentTimeMillis() + "] Increasing " + event.getEffectInstance().getEffect().getRegisteredName() + "duration by " + ((multiplier - 1) * 100) + "% and total duration: " + (newDuration / 20) + " seconds");
                 effectInstance.update(new MobEffectInstance(

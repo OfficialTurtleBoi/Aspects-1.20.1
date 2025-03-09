@@ -21,10 +21,15 @@ import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.client.renderer.ArcaneAuraRenderer;
 import net.turtleboi.aspects.client.renderer.ColdAuraRenderer;
 import net.turtleboi.aspects.client.renderer.FireAuraRenderer;
+import net.turtleboi.aspects.client.renderer.ShockwaveRenderer;
+import net.turtleboi.aspects.client.renderer.util.ParticleSpawnQueue;
 import net.turtleboi.aspects.effect.ModEffects;
 import net.turtleboi.aspects.effect.StunnedEffect;
 import net.turtleboi.aspects.util.AspectUtil;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 @EventBusSubscriber(modid = Aspects.MOD_ID, value = Dist.CLIENT)
@@ -78,6 +83,8 @@ public class ClientEvents {
                 clientPlayer.xRotO = data.savedPitch;
             }
         }
+
+        ParticleSpawnQueue.tick();
     }
 
     @SubscribeEvent
