@@ -144,12 +144,24 @@ public class AspectUtil {
                                 armor.getDescriptionId() + TERRA_ASPECT + "_infusion",
                                 1.0,
                                 AttributeModifier.Operation.ADD_VALUE);
+                        double arcaniAmplifier;
+                        double arcaniFactor = 1;
+                        if (entity.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                            arcaniAmplifier = entity.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+                            arcaniFactor = 1 + (arcaniAmplifier / 4.0);
+                        }
                         AttributeModifierUtil.applyPermanentModifier(
                                 entity,
                                 Attributes.ARMOR,
                                 armor.getDescriptionId() + TERRA_ASPECT + "_armor_infusion",
                                 2.0,
                                 AttributeModifier.Operation.ADD_VALUE);
+                        AttributeModifierUtil.applyPermanentModifier(
+                                entity,
+                                Attributes.ARMOR,
+                                armor.getDescriptionId() + TERRA_ASPECT + "_armor_percent_infusion",
+                                0.25 * arcaniFactor,
+                                AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
                         break;
                     case TEMPESTAS_ASPECT:
                         //System.out.println("Applying Glacius from " + armor.getDescriptionId());

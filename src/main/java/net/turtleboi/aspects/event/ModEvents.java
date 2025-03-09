@@ -23,20 +23,26 @@ import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
 import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.turtleboi.aspects.Aspects;
+import net.turtleboi.aspects.client.renderer.ArcaneAuraRenderer;
 import net.turtleboi.aspects.client.renderer.ColdAuraRenderer;
 import net.turtleboi.aspects.client.renderer.FireAuraRenderer;
 import net.turtleboi.aspects.effect.ModEffects;
 import net.turtleboi.aspects.item.ModItems;
 import net.turtleboi.aspects.network.payloads.ParticleData;
+import net.turtleboi.aspects.network.payloads.SoundData;
+import net.turtleboi.aspects.particle.ModParticles;
 import net.turtleboi.aspects.potion.ModPotions;
 import net.turtleboi.aspects.util.*;
 
@@ -205,6 +211,7 @@ public class   ModEvents {
     @SubscribeEvent
     public static void onEntityHurtPre(LivingDamageEvent.Pre event){
         LivingEntity hurtEntity = event.getEntity();
+        Entity attackerEntity = event.getSource().getEntity();
         if (hurtEntity instanceof LivingEntity livingEntity) {
             double hurtArcaniAmplifier = 0;
             if (livingEntity.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
@@ -214,16 +221,50 @@ public class   ModEvents {
 
             if (event.getSource().getEntity() instanceof Player player) {
                 double playerArcaniAmplifier = 0;
+                double playerGlaciusAmplifier = 0;
+                double playerTerraAmplifier = 0;
+                double playerUmbreAmplifier = 0;
                 if (player.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
                     playerArcaniAmplifier = player.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
                 }
                 double playerArcaniFactor = 1 + (playerArcaniAmplifier / 4.0);
 
                 if (player.getAttribute(ModAttributes.GLACIUS_ASPECT) != null) {
-                    double glaciusAmplifier = player.getAttributeValue(ModAttributes.GLACIUS_ASPECT);
-                    if (glaciusAmplifier > 0) {
+                    playerGlaciusAmplifier = player.getAttributeValue(ModAttributes.GLACIUS_ASPECT);
+                    if (playerGlaciusAmplifier > 0) {
                         double originalDamage = event.getOriginalDamage();
                         event.setNewDamage((float) (originalDamage * ((1 + (playerArcaniFactor / 2)) / hurtArcaniFactor)));
+                    }
+                }
+
+                if (player.getAttribute(ModAttributes.UMBRE_ASPECT) != null) {
+                    playerUmbreAmplifier = player.getAttribute(ModAttributes.UMBRE_ASPECT).getValue();
+                    if (playerUmbreAmplifier > 0) {
+
+                    }
+                }
+
+                if (player.getAttribute(ModAttributes.TERRA_ASPECT) != null) {
+                    playerTerraAmplifier = player.getAttributeValue(ModAttributes.TERRA_ASPECT);
+                    if (playerTerraAmplifier > 0) {
+                        double originalDamage = event.getOriginalDamage();
+                        if (playerUmbreAmplifier > 0 && player.level().getRandom().nextDouble() < 0.05 + (0.05 * (playerTerraAmplifier + playerUmbreAmplifier))) {
+                            event.setNewDamage(0);
+                            if (attackerEntity instanceof LivingEntity attackerLivingEntity){
+                                attackerLivingEntity.hurt(player.damageSources().magic(), (float) Math.max(1, (originalDamage / 2) * (playerTerraAmplifier + playerUmbreAmplifier)));
+                            }
+                        }
+
+                        if (playerArcaniAmplifier > 0 && player.level().getRandom().nextDouble() < 0.1 + (0.1 * (playerTerraAmplifier + playerArcaniAmplifier))) {
+                            player.addEffect(new MobEffectInstance(
+                                    MobEffects.ABSORPTION,
+                                    600,
+                                    (int) Math.max(0, (originalDamage - 1)),
+                                    false,
+                                    true,
+                                    true
+                            ));
+                        }
                     }
                 }
             }
@@ -285,6 +326,34 @@ public class   ModEvents {
                                 if (event.getSource().type() == player.level().damageSources().onFire().type()) {
                                     player.heal((float) Math.max(1, (event.getOriginalDamage() + (((1f * (infernumAmplifier)) * playerArcaniFactor) / hurtArcaniFactor)) * (0.1 * umbreAmplifier)));
                                 }
+                            }
+                        }
+
+                        if (player.getAttribute(ModAttributes.TEMPESTUS_ASPECT) != null) {
+                            double tempestasAmplifier = player.getAttributeValue(ModAttributes.TEMPESTUS_ASPECT);
+                            if (tempestasAmplifier > 0 && player.level().getRandom().nextDouble() < 0.05 + (0.05 * tempestasAmplifier)) {
+                                player.level().playSound(
+                                        null,
+                                        hurtEntity.getX(),
+                                        hurtEntity.getY(),
+                                        hurtEntity.getZ(),
+                                        SoundEvents.LIGHTNING_BOLT_THUNDER,
+                                        SoundSource.PLAYERS,
+                                        1.0F,
+                                        0.4f / (player.level().getRandom().nextFloat() * 0.4f + 0.8f)
+                                );
+                                AspectUtil.setStunner(livingEntity, player);
+                                //System.out.println(
+                                //        Component.translatable(
+                                //                livingEntity.getName().getString()) +
+                                //                " stunned by " + player + " for " +
+                                //                (int) (((20 * tempestasAmplifier) * playerArcaniFactor) / hurtArcaniFactor) / 20 + " seconds!"
+                                //);
+                                hurtEntity.addEffect(
+                                        new MobEffectInstance(
+                                                ModEffects.STUNNED,
+                                                (int) (((20 * tempestasAmplifier) * playerArcaniFactor) / hurtArcaniFactor),
+                                                (int) tempestasAmplifier - 1));
                             }
                         }
                     }
@@ -544,11 +613,109 @@ public class   ModEvents {
     }
 
     @SubscribeEvent
+    public static void onLivingEntityDeath(LivingDeathEvent event) {
+        if (event.getEntity() instanceof LivingEntity livingEntity) {
+            if (livingEntity.isOnFire() && livingEntity.getPersistentData().contains("IgnitedBy")) {
+                Player ignitingPlayer = livingEntity.level().getPlayerByUUID(livingEntity.getPersistentData().getUUID("IgnitedBy"));
+                double playerArcaniAmplifier = 0;
+                if (ignitingPlayer.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                    playerArcaniAmplifier = ignitingPlayer.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+                }
+                double playerArcaniFactor = 1 + (playerArcaniAmplifier / 4.0);
+
+                if (ignitingPlayer.getAttribute(ModAttributes.INFERNUM_ASPECT) != null && playerArcaniAmplifier > 0) {
+                    livingEntity.level().playSound(
+                            null,
+                            livingEntity.getX(),
+                            livingEntity.getY(),
+                            livingEntity.getZ(),
+                            SoundEvents.DRAGON_FIREBALL_EXPLODE,
+                            SoundSource.HOSTILE,
+                            1.0F,
+                            0.4f / (livingEntity.level().getRandom().nextFloat() * 0.4f + 0.8f)
+                    );
+                    double offX = (livingEntity.level().random.nextDouble() - 0.5) * 0.5;
+                    double offY = livingEntity.getBbHeight() * livingEntity.level().random.nextDouble();
+                    double offZ = (livingEntity.level().random.nextDouble() - 0.5) * 0.5;
+                    ParticleData.spawnParticle(
+                            ParticleTypes.EXPLOSION,
+                            livingEntity.getX() + offX,
+                            livingEntity.getY() + offY,
+                            livingEntity.getZ() + offZ,
+                            0,0,0);
+                    double playerInfernumAmplifier = ignitingPlayer.getAttributeValue(ModAttributes.INFERNUM_ASPECT);
+                    AABB ignitionArea = new AABB(
+                            livingEntity.getX() - (playerInfernumAmplifier * playerArcaniFactor), livingEntity.getY() - (playerInfernumAmplifier * playerArcaniFactor),
+                            livingEntity.getZ() - (playerInfernumAmplifier * playerArcaniFactor),
+                            livingEntity.getX() + (playerInfernumAmplifier * playerArcaniFactor), livingEntity.getY() + (playerInfernumAmplifier * playerArcaniFactor),
+                            livingEntity.getZ() + (playerInfernumAmplifier * playerArcaniFactor));
+                    FireAuraRenderer.addAuraForEntity(livingEntity, System.currentTimeMillis(), 30, (playerInfernumAmplifier * playerArcaniFactor));
+                    List<LivingEntity> blastedEntities = livingEntity.level().getEntitiesOfClass(
+                            LivingEntity.class, ignitionArea, e -> e != ignitingPlayer);
+                    for (LivingEntity blastedEntity : blastedEntities) {
+                        AspectUtil.setIgnitor(blastedEntity, ignitingPlayer);
+                        int ignitionTime = (int) ((60 * playerInfernumAmplifier) * playerArcaniFactor);
+                        //System.out.println("Igniting " + livingEntity.getName() + " for " + ignitionTime / 20 + " seconds");
+                        if (playerArcaniFactor > 1) {
+                            int upgradedTicks = (int) (ignitionTime * playerArcaniFactor);
+                            if (blastedEntity.isOnFire()) {
+                                int currentTicks = blastedEntity.getRemainingFireTicks();
+                                blastedEntity.setRemainingFireTicks(currentTicks + upgradedTicks);
+                                //System.out.println(
+                                //        "Increasing ignition time for " + livingEntity.getName() + " to " +
+                                //                (currentTicks + upgradedTicks) / 20 + " seconds"
+                                //);
+                            } else {
+                                blastedEntity.igniteForTicks(upgradedTicks);
+                                //System.out.println(
+                                //        "Increasing ignition time for " + livingEntity.getName() + " to " +
+                                //                (upgradedTicks) / 20 + " seconds"
+                                //);
+                            }
+                        } else {
+                            if (blastedEntity.isOnFire()) {
+                                int currentTicks = blastedEntity.getRemainingFireTicks();
+                                blastedEntity.setRemainingFireTicks(currentTicks + ignitionTime);
+                                //System.out.println(
+                                //        "Increasing ignition time for " + livingEntity.getName() + " to " +
+                                //                (currentTicks + ignitionTime) / 20 + " seconds"
+                                //);
+                            } else {
+                                blastedEntity.igniteForTicks(ignitionTime);
+                            }
+                        }
+
+                        if (playerInfernumAmplifier > 1) {
+                            blastedEntity.hurt(ignitingPlayer.damageSources().onFire(), 1);
+                            blastedEntity.setLastHurtByPlayer(ignitingPlayer);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
     public static void onLivingEntityTick(EntityTickEvent.Post event){
         if (event.getEntity() instanceof LivingEntity livingEntity){
             if (!livingEntity.isOnFire() && livingEntity.getPersistentData().contains("IgnitedBy")) {
                 //System.out.println(livingEntity + " extinguished!");
                 livingEntity.getPersistentData().remove("IgnitedBy");
+            }
+
+            if (livingEntity instanceof Player player) {
+                double playerArcaniAmplifier = 0;
+                if (player.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                    playerArcaniAmplifier = player.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+                }
+                double playerArcaniFactor = 1 + (playerArcaniAmplifier / 4.0);
+
+                if (player.getAttribute(ModAttributes.TERRA_ASPECT) != null && playerArcaniAmplifier > 0) {
+                    double playerTerraAmplifier = player.getAttributeValue(ModAttributes.TERRA_ASPECT);
+                    if (player.tickCount % (80 / (playerTerraAmplifier * playerArcaniFactor)) == 0) {
+                        player.heal((float) (playerTerraAmplifier * playerArcaniFactor));
+                    }
+                }
             }
         }
     }
@@ -623,7 +790,18 @@ public class   ModEvents {
             int newDuration = (int) (effectInstance.getDuration() * multiplier);
             //System.out.println("Added Effect - Multiplier: " + multiplier);
             if (multiplier > 1) {
-                //System.out.println("Increasing potion duration by " + ((multiplier - 1) * 100) + "% and total duration: " + (newDuration / 20) + " seconds");
+                if (livingEntity instanceof Player player) {
+                    ArcaneAuraRenderer.addAuraForEntity(player, System.currentTimeMillis(), 20, 1);
+                    SoundData.spawnSound(
+                            SoundEvents.ILLUSIONER_CAST_SPELL,
+                            player.getX(),
+                            player.getY(),
+                            player.getZ(),
+                            1.5F,
+                            0.4f / (player.level().getRandom().nextFloat() * 0.4f + 0.8f)
+                    );
+                }
+                //System.out.println("[" + System.currentTimeMillis() + "] Increasing " + event.getEffectInstance().getEffect().getRegisteredName() + "duration by " + ((multiplier - 1) * 100) + "% and total duration: " + (newDuration / 20) + " seconds");
                 effectInstance.update(new MobEffectInstance(
                         effectInstance.getEffect(),
                         newDuration,

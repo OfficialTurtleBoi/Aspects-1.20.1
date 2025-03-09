@@ -1,11 +1,14 @@
 package net.turtleboi.aspects;
 
+import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.turtleboi.aspects.block.ModBlockEntities;
 import net.turtleboi.aspects.block.ModBlocks;
+import net.turtleboi.aspects.client.renderer.SingularityRenderer;
 import net.turtleboi.aspects.component.ModDataComponents;
 import net.turtleboi.aspects.effect.ModEffects;
+import net.turtleboi.aspects.entity.ModEntities;
 import net.turtleboi.aspects.item.ModCreativeModeTabs;
 import net.turtleboi.aspects.item.ModItems;
 import net.turtleboi.aspects.particle.ChilledParticles;
@@ -47,6 +50,9 @@ public class Aspects {
 
         ModDataComponents.register(modEventBus);
         ModAttributes.REGISTRY.register(modEventBus);
+
+        ModEntities.register(modEventBus);
+
         ModEffects.register(modEventBus);
         ModPotions.register(modEventBus);
         ModParticles.register(modEventBus);
@@ -80,7 +86,7 @@ public class Aspects {
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
-
+            EntityRenderers.register(ModEntities.SINGULARITY.get(), SingularityRenderer::new);
         }
 
         @SubscribeEvent

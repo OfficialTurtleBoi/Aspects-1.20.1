@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -65,23 +66,50 @@ public class ChilledEffect extends MobEffect {
                         AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
             }
 
-            if (pAmplifier > 3){
-                int freezeDuration = 100;
-                if (pLivingEntity.getPersistentData().hasUUID("ChilledBy")) {
-                    UUID chilledByUUID = pLivingEntity.getPersistentData().getUUID("ChilledBy");
-                    if (pLivingEntity.level() instanceof ServerLevel serverLevel) {
-                        Entity chilledByEntity = serverLevel.getEntity(chilledByUUID);
-                        if (chilledByEntity instanceof LivingEntity chillerEntity) {
-                            if (chillerEntity.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
-                                double arcaniAmplifier = chillerEntity.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
-                                double arcaneFactor = 1 + (arcaniAmplifier / 4.0);
-                                freezeDuration = (int) (100 * arcaneFactor);
+            int freezeDuration = 100;
+            if (pLivingEntity.getPersistentData().hasUUID("ChilledBy")) {
+                UUID chilledByUUID = pLivingEntity.getPersistentData().getUUID("ChilledBy");
+                if (pLivingEntity.level() instanceof ServerLevel serverLevel) {
+                    Entity chilledByEntity = serverLevel.getEntity(chilledByUUID);
+                    if (chilledByEntity instanceof LivingEntity chillerEntity) {
+                        double arcaniAmplifier;
+                        double arcaniFactor = 1;
+                        if (chillerEntity.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
+                            arcaniAmplifier = chillerEntity.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+                            arcaniFactor = 1 + (arcaniAmplifier / 4.0);
+                        }
+                        freezeDuration = (int) (100 * arcaniFactor);
+
+                        if (chillerEntity.getAttribute(ModAttributes.TERRA_ASPECT) != null) {
+                            double playerTerraAmplifier = chillerEntity.getAttributeValue(ModAttributes.TERRA_ASPECT);
+                            if (!chillerEntity.hasEffect(MobEffects.DAMAGE_RESISTANCE)){
+                                chillerEntity.addEffect(
+                                        new MobEffectInstance(
+                                                MobEffects.DAMAGE_RESISTANCE,
+                                                (int) (600 * playerTerraAmplifier * arcaniFactor),
+                                                pAmplifier,
+                                                false,
+                                                true,
+                                                true
+                                        ));
+                            } else if (chillerEntity.hasEffect(MobEffects.DAMAGE_RESISTANCE) &&
+                                    chillerEntity.getEffect(MobEffects.DAMAGE_RESISTANCE).getAmplifier() <= pAmplifier) {
+                                chillerEntity.addEffect(
+                                        new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE,
+                                                (int) (600 * playerTerraAmplifier * arcaniFactor),
+                                                pAmplifier,
+                                                false,
+                                                true,
+                                                true));
                             }
                         }
                     }
                 }
-                pLivingEntity.addEffect(new MobEffectInstance(ModEffects.FROZEN, freezeDuration, 0));
+            }
+
+            if (pAmplifier > 3) {
                 pLivingEntity.removeEffect(ModEffects.CHILLED);
+                pLivingEntity.addEffect(new MobEffectInstance(ModEffects.FROZEN, freezeDuration, 0));
             }
         }
         return super.applyEffectTick(pLivingEntity, pAmplifier);

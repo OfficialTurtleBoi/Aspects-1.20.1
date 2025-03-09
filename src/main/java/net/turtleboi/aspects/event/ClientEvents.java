@@ -18,6 +18,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.turtleboi.aspects.Aspects;
+import net.turtleboi.aspects.client.renderer.ArcaneAuraRenderer;
 import net.turtleboi.aspects.client.renderer.ColdAuraRenderer;
 import net.turtleboi.aspects.client.renderer.FireAuraRenderer;
 import net.turtleboi.aspects.effect.ModEffects;
@@ -61,6 +62,7 @@ public class ClientEvents {
         MultiBufferSource.BufferSource bufferSource = (MultiBufferSource.BufferSource) event.getMultiBufferSource();
         FireAuraRenderer.renderAuras(bufferSource, poseStack, livingEntity, event.getPartialTick());
         ColdAuraRenderer.renderAuras(bufferSource, poseStack, livingEntity, event.getPartialTick());
+        ArcaneAuraRenderer.renderAuras(bufferSource, poseStack, livingEntity, event.getPartialTick());
     }
 
     @SubscribeEvent

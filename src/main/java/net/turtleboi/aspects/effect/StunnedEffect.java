@@ -19,6 +19,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.turtleboi.aspects.Aspects;
+import net.turtleboi.aspects.entity.ModEntities;
+import net.turtleboi.aspects.entity.entities.SingularityEntity;
 import net.turtleboi.aspects.event.ModEvents;
 import net.turtleboi.aspects.network.payloads.ParticleData;
 import net.turtleboi.aspects.particle.ModParticles;
@@ -81,19 +83,8 @@ public class StunnedEffect extends MobEffect {
                     player.setSprinting(false);
                     player.setJumping(false);
                 }
-
                 StunPlayerData data = stunnedPlayers.get(player.getUUID());
-                Vec3 currentVelocity;
-                if (player.onGround()) {
-                    currentVelocity = new Vec3(0,-1,0);
-                    if (data != null) {
-                        player.teleportTo(data.savedX, data.savedY, data.savedZ);
-                    }
-                } else {
-                    currentVelocity = player.getDeltaMovement();
-                }
 
-                player.setDeltaMovement(0, currentVelocity.y, 0);
                 if (data != null) {
                     player.setYRot(data.savedYaw);
                     player.setXRot(data.savedPitch);
@@ -113,14 +104,6 @@ public class StunnedEffect extends MobEffect {
                         AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
             } else if (pLivingEntity instanceof Mob mob) {
-                Vec3 currentVelocity;
-                if (mob.onGround()) {
-                    currentVelocity = new Vec3(0,-1,0);
-                } else {
-                    currentVelocity = mob.getDeltaMovement();
-                }
-                Vec3 newVelocity = new Vec3(0, currentVelocity.y, 0);
-                mob.setDeltaMovement(newVelocity);
                 mob.setNoAi(true);
                 mob.hurtMarked = true;
                 mob.setSprinting(false);
@@ -144,7 +127,7 @@ public class StunnedEffect extends MobEffect {
             if (stunningPlayer != null && stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT).getValue() > 0) {
                 double arcaniAmplifier = stunningPlayer.getAttributeValue(ModAttributes.ARCANI_ASPECT);
                 Level level = pLivingEntity.level();
-                if (level instanceof ServerLevel serverLevel) {
+                if (level instanceof ServerLevel serverLevel && duration <= 1) {
                     for (int i = 0; i < (arcaniAmplifier / 2); i++) {
                         LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, serverLevel);
                         lightning.setPos(pLivingEntity.getX(), pLivingEntity.getY(), pLivingEntity.getZ());
@@ -153,8 +136,8 @@ public class StunnedEffect extends MobEffect {
                 }
 
                 if (pLivingEntity.getPersistentData().hasUUID("StunnedBy")){
-                    AABB ignitionArea = new AABB(pLivingEntity.getX() - 0.5, pLivingEntity.getY() - 0.5, pLivingEntity.getZ() - 0.5,
-                            pLivingEntity.getX() + 0.5, pLivingEntity.getY() + 0.5, pLivingEntity.getZ() + 0.5);
+                    AABB ignitionArea = new AABB(pLivingEntity.getX() - 2, pLivingEntity.getY() - 2, pLivingEntity.getZ() - 2,
+                            pLivingEntity.getX() + 2, pLivingEntity.getY() + 2, pLivingEntity.getZ() + 2);
                     List<LivingEntity> ignitedEntities = pLivingEntity.level().getEntitiesOfClass(LivingEntity.class, ignitionArea, e -> e != pLivingEntity && !(e instanceof Player));
                     for (LivingEntity ignitedEntity : ignitedEntities) {
                         AspectUtil.setIgnitor(ignitedEntity, pLivingEntity.level().getPlayerByUUID(pLivingEntity.getPersistentData().getUUID("StunnedBy")));
@@ -164,39 +147,11 @@ public class StunnedEffect extends MobEffect {
         }
 
         if (stunningPlayer != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT).getValue() > 0) {
-            double umbreAmplifier = stunningPlayer.getAttributeValue(ModAttributes.UMBRE_ASPECT);
-
-            int randomInt = pLivingEntity.level().random.nextInt(100);
-            if (randomInt < (50 * (1 + (umbreAmplifier / 4)))) {
-                AABB area = new AABB(pLivingEntity.getX() - (4 * (1 + umbreAmplifier)), pLivingEntity.getY() - (4 * (1 + umbreAmplifier)), pLivingEntity.getZ() - (4 * (1 + umbreAmplifier)),
-                        pLivingEntity.getX() + (4 * (1 + umbreAmplifier)), pLivingEntity.getY() + (4 * (1 + umbreAmplifier)), pLivingEntity.getZ() + (4 * (1 + umbreAmplifier)));
-                List<LivingEntity> entities = pLivingEntity.level().getEntitiesOfClass(LivingEntity.class, area, e -> e != pLivingEntity && !(e instanceof Player));
-                if (!entities.isEmpty()) {
-                    if (randomInt < (25 * (1 + (umbreAmplifier / 4)))) {
-                        LivingEntity chosen = entities.get(pLivingEntity.level().getRandom().nextInt(entities.size()));
-                        if (!storedEntities.contains(chosen)) {
-                            storedEntities.add(chosen);
-                        }
-                    }
-                    if (duration >= 3) {
-                        for (LivingEntity target : storedEntities) {
-                            Vec3 direction = new Vec3(pLivingEntity.getX() - target.getX(), pLivingEntity.getY() - target.getY(), pLivingEntity.getZ() - target.getZ());
-                            direction = direction.normalize().scale(0.75);
-                            target.setDeltaMovement(direction);
-                            target.hurtMarked = true;
-                        }
-                    }
-                }
-            }
-
-            if (duration < 3) {
-                for (LivingEntity target : storedEntities) {
-                    double throwAngle = (pLivingEntity.level().getRandom().nextDouble() * (1 + (umbreAmplifier / 4)));
-                    Vec3 direction = new Vec3(pLivingEntity.getX() - target.getX(), pLivingEntity.getY() - (target.getY() + throwAngle), pLivingEntity.getZ() - target.getZ());
-                    direction = direction.normalize().scale(-(1 + (umbreAmplifier / 4)) * pLivingEntity.level().getRandom().nextDouble());
-                    target.setDeltaMovement(direction);
-                    target.hurtMarked = true;
-                }
+            if (duration == 1){
+                SingularityEntity blackHole = new SingularityEntity(ModEntities.SINGULARITY.get(), pLivingEntity.level());
+                blackHole.setOwner(pLivingEntity);
+                blackHole.setPos(pLivingEntity.getX(), pLivingEntity.getY() + pLivingEntity.getBbHeight(), pLivingEntity.getZ());
+                pLivingEntity.level().addFreshEntity(blackHole);
             }
         }
         return super.applyEffectTick(pLivingEntity, pAmplifier);

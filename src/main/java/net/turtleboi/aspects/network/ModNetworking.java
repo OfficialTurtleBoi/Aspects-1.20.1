@@ -7,6 +7,7 @@ import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
 import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.network.payloads.FrozenData;
 import net.turtleboi.aspects.network.payloads.ParticleData;
+import net.turtleboi.aspects.network.payloads.SoundData;
 
 @EventBusSubscriber(modid = Aspects.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public class ModNetworking {
@@ -18,6 +19,17 @@ public class ModNetworking {
                 ParticleData.STREAM_CODEC,
                 new DirectionalPayloadHandler<>(
                         ParticleData::handleParticleData,
+                        (data, context) -> {
+
+                        }
+                )
+        );
+
+        registrar.playToClient(
+                SoundData.TYPE,
+                SoundData.STREAM_CODEC,
+                new DirectionalPayloadHandler<>(
+                        SoundData::handleSoundData,
                         (data, context) -> {
 
                         }
