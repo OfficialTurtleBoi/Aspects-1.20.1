@@ -9,6 +9,8 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.turtleboi.aspects.Aspects;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,24 +31,24 @@ public class ColdAuraRenderer {
 
         Random random = new Random();
         List<SpikeData> list = new ArrayList<>();
-        list.add(new SpikeData(5, 8, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike1.png"), random));
-        list.add(new SpikeData(8, 11, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike2.png"), random));
-        list.add(new SpikeData(8, 14, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike3.png"), random));
-        list.add(new SpikeData(6, 11, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike4.png"), random));
-        list.add(new SpikeData(6, 19, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike5.png"), random));
-        list.add(new SpikeData(8, 8, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike6.png"), random));
-        list.add(new SpikeData(5, 8, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike1.png"), random));
-        list.add(new SpikeData(8, 11, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike2.png"), random));
-        list.add(new SpikeData(8, 14, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike3.png"), random));
-        list.add(new SpikeData(6, 11, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike4.png"), random));
-        list.add(new SpikeData(6, 19, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike5.png"), random));
-        list.add(new SpikeData(8, 8, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike6.png"), random));
-        list.add(new SpikeData(5, 8, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike1.png"), random));
-        list.add(new SpikeData(8, 11, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike2.png"), random));
-        list.add(new SpikeData(8, 14, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike3.png"), random));
-        list.add(new SpikeData(6, 11, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike4.png"), random));
-        list.add(new SpikeData(6, 19, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike5.png"), random));
-        list.add(new SpikeData(8, 8, ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/spike6.png"), random));
+        list.add(new SpikeData(5, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike1.png"), random));
+        list.add(new SpikeData(8, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike2.png"), random));
+        list.add(new SpikeData(8, 14, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike3.png"), random));
+        list.add(new SpikeData(6, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike4.png"), random));
+        list.add(new SpikeData(6, 19, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike5.png"), random));
+        list.add(new SpikeData(8, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike6.png"), random));
+        list.add(new SpikeData(5, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike1.png"), random));
+        list.add(new SpikeData(8, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike2.png"), random));
+        list.add(new SpikeData(8, 14, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike3.png"), random));
+        list.add(new SpikeData(6, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike4.png"), random));
+        list.add(new SpikeData(6, 19, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike5.png"), random));
+        list.add(new SpikeData(8, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike6.png"), random));
+        list.add(new SpikeData(5, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike1.png"), random));
+        list.add(new SpikeData(8, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike2.png"), random));
+        list.add(new SpikeData(8, 14, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike3.png"), random));
+        list.add(new SpikeData(6, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike4.png"), random));
+        list.add(new SpikeData(6, 19, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike5.png"), random));
+        list.add(new SpikeData(8, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike6.png"), random));
 
         Collections.shuffle(list, random);
         spikesSequence = list.toArray(new SpikeData[0]);
@@ -130,25 +132,30 @@ public class ColdAuraRenderer {
     }
 
     private void renderSpikeQuad(PoseStack postStack, VertexConsumer vertexConsumer, float width, float height, int vertexAlpha) {
+        PoseStack.Pose pose = postStack.last();
+        Matrix4f matrix = pose.pose();
+        Matrix3f normalMatrix = pose.normal();
         float halfWidth = width / 2.0f;
-        vertex(postStack.last(), vertexConsumer, -halfWidth, 0, 0, 0, 0, vertexAlpha);
-        vertex(postStack.last(), vertexConsumer, halfWidth, 0, 0, 1, 0, vertexAlpha);
-        vertex(postStack.last(), vertexConsumer, halfWidth, height, 0, 1, 1, vertexAlpha);
-        vertex(postStack.last(), vertexConsumer, -halfWidth, height, 0, 0, 1, vertexAlpha);
+        vertex(vertexConsumer, matrix, normalMatrix, -halfWidth, 0, 0, 0, 0, vertexAlpha);
+        vertex(vertexConsumer, matrix, normalMatrix, halfWidth, 0, 0, 1, 0, vertexAlpha);
+        vertex(vertexConsumer, matrix, normalMatrix, halfWidth, height, 0, 1, 1, vertexAlpha);
+        vertex(vertexConsumer, matrix, normalMatrix, -halfWidth, height, 0, 0, 1, vertexAlpha);
 
-        vertex(postStack.last(), vertexConsumer, -halfWidth, height, 0, 0, 1, vertexAlpha);
-        vertex(postStack.last(), vertexConsumer, halfWidth, height, 0, 1, 1, vertexAlpha);
-        vertex(postStack.last(), vertexConsumer, halfWidth, 0, 0, 1, 0, vertexAlpha);
-        vertex(postStack.last(), vertexConsumer, -halfWidth, 0, 0, 0, 0, vertexAlpha);
+        vertex(vertexConsumer, matrix, normalMatrix, -halfWidth, height, 0, 0, 1, vertexAlpha);
+        vertex(vertexConsumer, matrix, normalMatrix, halfWidth, height, 0, 1, 1, vertexAlpha);
+        vertex(vertexConsumer, matrix, normalMatrix, halfWidth, 0, 0, 1, 0, vertexAlpha);
+        vertex(vertexConsumer, matrix, normalMatrix, -halfWidth, 0, 0, 0, 0, vertexAlpha);
     }
 
-    private static void vertex(PoseStack.Pose pose, VertexConsumer consumer, float x, float y, float z, float u, float v, int vertexAlpha) {
-        consumer.addVertex(pose, x, y, z)
-                .setColor(255, 255, 255, vertexAlpha)
-                .setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(240)
-                .setNormal(pose, 0, 0, 1);
+    private static void vertex(VertexConsumer vertexConsumer, Matrix4f matrix, Matrix3f normalMatrix,
+                               float x, float y, float z, float u, float v, int vertexAlpha) {
+        vertexConsumer.vertex(matrix, x, y, z)
+                .color(255, 255, 255, vertexAlpha)
+                .uv(u, v)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(240)
+                .normal(normalMatrix,0, 0, 1)
+                .endVertex();
     }
 
     public boolean isExpired() {

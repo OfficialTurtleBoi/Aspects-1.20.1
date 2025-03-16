@@ -13,7 +13,7 @@ import net.turtleboi.aspects.client.model.PedestalModel;
 
 public class PedestalRenderer implements BlockEntityRenderer<PedestalBlockEntity> {
     private final PedestalModel model;
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/block/stone.png");
+    private static final ResourceLocation TEXTURE = new ResourceLocation("minecraft", "textures/block/stone.png");
 
     public PedestalRenderer(BlockEntityRendererProvider.Context context) {
         this.model = new PedestalModel(context.bakeLayer(PedestalModel.PEDESTAL_LAYER));
@@ -25,7 +25,7 @@ public class PedestalRenderer implements BlockEntityRenderer<PedestalBlockEntity
         pPoseStack.mulPose(Axis.XP.rotationDegrees(180));
         pPoseStack.mulPose(Axis.YP.rotationDegrees(180));
         VertexConsumer baseVertexConsumer = pBuffer.getBuffer(RenderType.entityTranslucentCull(TEXTURE));
-        model.renderToBuffer(pPoseStack, baseVertexConsumer, pPackedLight, pPackedOverlay);
+        model.renderToBuffer(pPoseStack, baseVertexConsumer, pPackedLight, pPackedOverlay, 1, 1, 1, 1);
         pPoseStack.popPose();
     }
 }

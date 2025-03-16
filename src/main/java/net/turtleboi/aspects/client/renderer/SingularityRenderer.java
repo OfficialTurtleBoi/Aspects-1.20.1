@@ -17,6 +17,8 @@ import net.minecraft.world.entity.player.Player;
 import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.entity.entities.SingularityEntity;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 public class SingularityRenderer extends EntityRenderer<SingularityEntity> {
     public SingularityRenderer(EntityRendererProvider.Context context) {
@@ -26,7 +28,7 @@ public class SingularityRenderer extends EntityRenderer<SingularityEntity> {
     @Override
     public @NotNull ResourceLocation getTextureLocation(SingularityEntity singularityEntity) {
         int textureIndex = singularityEntity.getTextureIndex();
-        return ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/entity/singularity/singularityentity_" + textureIndex + ".png");
+        return new ResourceLocation(Aspects.MOD_ID, "textures/entity/singularity/singularityentity_" + textureIndex + ".png");
     }
 
     @Override
@@ -52,16 +54,19 @@ public class SingularityRenderer extends EntityRenderer<SingularityEntity> {
             RenderSystem.defaultBlendFunc();
             RenderSystem.depthMask(false);
             VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entityTranslucentCull(getTextureLocation(singularityEntity)));
+            PoseStack.Pose pose = poseStack.last();
+            Matrix4f matrix = pose.pose();
+            Matrix3f normalMatrix = pose.normal();
 
-            vertex(poseStack.last(), vertexConsumer, -4, -4, 0, 0, 0, 255, 255, 255, 224);
-            vertex(poseStack.last(), vertexConsumer, 4, -4, 0, 1, 0, 255, 255, 255, 224);
-            vertex(poseStack.last(), vertexConsumer, 4, 4, 0, 1, 1, 255, 255, 255, 224);
-            vertex(poseStack.last(), vertexConsumer, -4, 4, 0, 0, 1, 255, 255, 255, 224);
+            vertex(vertexConsumer, matrix, normalMatrix, -4, -4, 0, 0, 0, 255, 255, 255, 224);
+            vertex(vertexConsumer, matrix, normalMatrix, 4, -4, 0, 1, 0, 255, 255, 255, 224);
+            vertex(vertexConsumer, matrix, normalMatrix, 4, 4, 0, 1, 1, 255, 255, 255, 224);
+            vertex(vertexConsumer, matrix, normalMatrix, -4, 4, 0, 0, 1, 255, 255, 255, 224);
 
-            vertex(poseStack.last(), vertexConsumer, -4, 4, 0, 0, 1, 255, 255, 255, 224);
-            vertex(poseStack.last(), vertexConsumer, 4, 4, 0, 1, 1, 255, 255, 255, 224);
-            vertex(poseStack.last(), vertexConsumer, 4, -4, 0, 1, 0, 255, 255, 255, 224);
-            vertex(poseStack.last(), vertexConsumer, -4, -4, 0, 0, 0, 255, 255, 255, 224);
+            vertex(vertexConsumer, matrix, normalMatrix, -4, 4, 0, 0, 1, 255, 255, 255, 224);
+            vertex(vertexConsumer, matrix, normalMatrix, 4, 4, 0, 1, 1, 255, 255, 255, 224);
+            vertex(vertexConsumer, matrix, normalMatrix, 4, -4, 0, 1, 0, 255, 255, 255, 224);
+            vertex(vertexConsumer, matrix, normalMatrix, -4, -4, 0, 0, 0, 255, 255, 255, 224);
 
             RenderSystem.depthMask(true);
             RenderSystem.disableBlend();
@@ -70,12 +75,14 @@ public class SingularityRenderer extends EntityRenderer<SingularityEntity> {
         super.render(singularityEntity, entityYaw, partialTicks, poseStack, bufferSource, light);
     }
 
-    private static void vertex(PoseStack.Pose pose, VertexConsumer consumer, int x, int y, int z, float u, float v, int red, int green, int blue, int vertexAlpha) {
-        consumer.addVertex(pose, (float)x, (float)y, (float)z)
-                .setColor(red, green, blue, vertexAlpha)
-                .setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(240)
-                .setNormal(pose, 0, 0, 1);
+    private static void vertex(VertexConsumer vertexConsumer, Matrix4f matrix, Matrix3f normalMatrix,
+                               int x, int y, int z, float u, float v, int red, int green, int blue, int vertexAlpha) {
+        vertexConsumer.vertex(matrix, (float)x, (float)y, (float)z)
+                .color(red, green, blue, vertexAlpha)
+                .uv(u, v)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(240)
+                .normal(normalMatrix,0, 0, 1)
+                .endVertex();;
     }
 }

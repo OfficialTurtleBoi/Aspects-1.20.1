@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.turtleboi.aspects.Aspects;
 
 public class PedestalModel extends Model {
-    public static final ModelLayerLocation PEDESTAL_LAYER = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "pedestal"), "main");
+    public static final ModelLayerLocation PEDESTAL_LAYER = new ModelLayerLocation(new ResourceLocation(Aspects.MOD_ID, "pedestal"), "main");
     private final ModelPart mainPart;
 
     public PedestalModel(ModelPart root) {
@@ -36,7 +36,7 @@ public class PedestalModel extends Model {
     }
 
     @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color) {
-        mainPart.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+    public void renderToBuffer(PoseStack pPoseStack, VertexConsumer pBuffer, int pPackedLight, int pPackedOverlay, float pRed, float pGreen, float pBlue, float pAlpha) {
+        mainPart.render(pPoseStack, pBuffer, pPackedLight, pPackedOverlay, pRed, pGreen, pBlue, pAlpha);
     }
 }

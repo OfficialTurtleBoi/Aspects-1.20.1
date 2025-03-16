@@ -1,8 +1,6 @@
-package net.turtleboi.aspects.effect;
+package net.turtleboi.aspects.effect.custom;
 
-import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -10,29 +8,23 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
-import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.client.renderer.ColdAuraRenderer;
+import net.turtleboi.aspects.effect.ModEffects;
 import net.turtleboi.aspects.entity.ModEntities;
 import net.turtleboi.aspects.entity.entities.SingularityEntity;
-import net.turtleboi.aspects.event.ModEvents;
-import net.turtleboi.aspects.network.payloads.ParticleData;
+import net.turtleboi.aspects.network.ModNetworking;
+import net.turtleboi.aspects.network.packets.SendParticlesS2C;
 import net.turtleboi.aspects.particle.ModParticles;
 import net.turtleboi.aspects.util.AspectUtil;
 import net.turtleboi.aspects.util.AttributeModifierUtil;
 import net.turtleboi.aspects.util.ModAttributes;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -46,25 +38,39 @@ public class StunnedEffect extends MobEffect {
     }
 
     @Override
-    public boolean applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
+    public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
         Player stunningPlayer = null;
         if (pLivingEntity.getPersistentData().hasUUID("StunnedBy")) {
             stunningPlayer = pLivingEntity.level().getPlayerByUUID(pLivingEntity.getPersistentData().getUUID("StunnedBy"));
+        }
+
+        if (pLivingEntity.hasEffect(ModEffects.STUNNED.get())) {
+            MobEffectInstance originalInstance = pLivingEntity.getEffect(ModEffects.STUNNED.get());
+            if (originalInstance.isVisible()) {
+                originalInstance.update(
+                        new MobEffectInstance(
+                                ModEffects.STUNNED.get(),
+                                originalInstance.getDuration(),
+                                originalInstance.getAmplifier(),
+                                originalInstance.isAmbient(),
+                                false,
+                                originalInstance.showIcon()));
+            }
         }
 
         if (!pLivingEntity.level().isClientSide &&
                 (pLivingEntity.tickCount % 20 == 0 || pLivingEntity.tickCount % 18 == 0 || pLivingEntity.tickCount % 16 == 0)){
             double offX = (pLivingEntity.level().random.nextDouble() - 0.5) * 0.5;
             double offZ = (pLivingEntity.level().random.nextDouble() - 0.5) * 0.5;
-            ParticleData.spawnParticle(
+            ModNetworking.sendToNear(new SendParticlesS2C(
                     ModParticles.STUNNED_PARTICLES.get(),
                     pLivingEntity.getX() + offX,
                     pLivingEntity.getY() + pLivingEntity.getBbHeight(),
                     pLivingEntity.getZ() + offZ,
-                    0,0,0);
+                    0,0,0), pLivingEntity);
         }
 
-        int duration = Objects.requireNonNull(pLivingEntity.getEffect(ModEffects.STUNNED)).getDuration();
+        int duration = Objects.requireNonNull(pLivingEntity.getEffect(ModEffects.STUNNED.get())).getDuration();
         if (!pLivingEntity.level().isClientSide() && duration > 2) {
             //System.out.println("Stunning: " + pLivingEntity);
             //System.out.println("Duration: " + duration);
@@ -106,7 +112,7 @@ public class StunnedEffect extends MobEffect {
                         Attributes.MOVEMENT_SPEED,
                         attributeModifierName,
                         -1,
-                        AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+                        AttributeModifier.Operation.MULTIPLY_TOTAL);
 
             } else if (pLivingEntity instanceof Mob mob) {
                 mob.setNoAi(true);
@@ -131,11 +137,11 @@ public class StunnedEffect extends MobEffect {
 
             if(stunningPlayer != null) {
                 double arcaniAmplifier = 0;
-                if (stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
-                    arcaniAmplifier = stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+                if (stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT.get()) != null) {
+                    arcaniAmplifier = stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT.get()).getValue();
                 }
 
-                if (stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT).getValue() > 0) {
+                if (stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT.get()) != null && stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT.get()).getValue() > 0) {
                     Level level = pLivingEntity.level();
                     if (level instanceof ServerLevel serverLevel && duration <= 1) {
                         for (int i = 0; i < (arcaniAmplifier / 2); i++) {
@@ -144,7 +150,7 @@ public class StunnedEffect extends MobEffect {
                             serverLevel.addFreshEntity(lightning);
                         }
 
-                        if (stunningPlayer.getAttribute(ModAttributes.INFERNUM_ASPECT) != null) {
+                        if (stunningPlayer.getAttribute(ModAttributes.INFERNUM_ASPECT.get()) != null) {
                             AABB ignitionArea = new AABB(pLivingEntity.getX() - 2, pLivingEntity.getY() - 2, pLivingEntity.getZ() - 2,
                                     pLivingEntity.getX() + 2, pLivingEntity.getY() + 2, pLivingEntity.getZ() + 2);
                             List<LivingEntity> ignitedEntities = pLivingEntity.level().getEntitiesOfClass(LivingEntity.class, ignitionArea, e -> e != pLivingEntity && !(e instanceof Player));
@@ -159,13 +165,13 @@ public class StunnedEffect extends MobEffect {
 
         if(stunningPlayer != null) {
             double arcaniAmplifier = 0;
-            if (stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT) != null) {
-                arcaniAmplifier = stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT).getValue();
+            if (stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT.get()) != null) {
+                arcaniAmplifier = stunningPlayer.getAttribute(ModAttributes.ARCANI_ASPECT.get()).getValue();
             }
             double arcaneFactor = 1 + (arcaniAmplifier / 4.0);
 
-            if (stunningPlayer.getAttribute(ModAttributes.GLACIUS_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.GLACIUS_ASPECT).getValue() > 0) {
-                double glaciusAmplifier = stunningPlayer.getAttributeValue(ModAttributes.GLACIUS_ASPECT);
+            if (stunningPlayer.getAttribute(ModAttributes.GLACIUS_ASPECT.get()) != null && stunningPlayer.getAttribute(ModAttributes.GLACIUS_ASPECT.get()).getValue() > 0) {
+                double glaciusAmplifier = stunningPlayer.getAttributeValue(ModAttributes.GLACIUS_ASPECT.get());
                 if (pLivingEntity.tickCount % 20 == 0) {
                     ColdAuraRenderer.addAuraForEntity(pLivingEntity, System.currentTimeMillis(), 30, glaciusAmplifier);
                     pLivingEntity.level().playSound(
@@ -191,12 +197,12 @@ public class StunnedEffect extends MobEffect {
                         double offY = pLivingEntity.getBbHeight() / 2;
                         double offZ = (random.nextDouble() - 0.5) * 0.2;
 
-                        ParticleData.spawnParticle(
+                        ModNetworking.sendToNear(new SendParticlesS2C(
                                 ParticleTypes.SNOWFLAKE,
                                 pLivingEntity.getX() + offX,
                                 pLivingEntity.getY() + offY,
                                 pLivingEntity.getZ() + offZ,
-                                xSpeed,ySpeed,zSpeed);
+                                xSpeed,ySpeed,zSpeed), pLivingEntity);
                     }
                     AABB ignitionArea = new AABB(pLivingEntity.getX() - 2, pLivingEntity.getY() - 2, pLivingEntity.getZ() - 2,
                             pLivingEntity.getX() + 2, pLivingEntity.getY() + 2, pLivingEntity.getZ() + 2);
@@ -204,12 +210,12 @@ public class StunnedEffect extends MobEffect {
                     for (LivingEntity chilledEntity : chilledEntities) {
                         AspectUtil.setChiller(chilledEntity, stunningPlayer);
                         int chillTicks = (int) ((40 * glaciusAmplifier) * arcaneFactor);
-                        chilledEntity.addEffect(new MobEffectInstance(ModEffects.CHILLED, chillTicks, (int) glaciusAmplifier - 1));
+                        chilledEntity.addEffect(new MobEffectInstance(ModEffects.CHILLED.get(), chillTicks, (int) glaciusAmplifier - 1));
                     }
                 }
             }
 
-            if (stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT).getValue() > 0) {
+            if (stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT.get()) != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT.get()).getValue() > 0) {
                 if (duration == 1){
                     SingularityEntity blackHole = new SingularityEntity(ModEntities.SINGULARITY.get(), pLivingEntity.level());
                     blackHole.setOwner(pLivingEntity);
@@ -219,30 +225,21 @@ public class StunnedEffect extends MobEffect {
             }
         }
 
-        return super.applyEffectTick(pLivingEntity, pAmplifier);
+        super.applyEffectTick(pLivingEntity, pAmplifier);
     }
 
-
     @Override
-    public boolean shouldApplyEffectTickThisTick(int pDuration, int pAmplifier) {
+    public boolean isDurationEffectTick(int pDuration, int pAmplifier) {
         return true;
     }
 
     @Override
-    public void removeAttributeModifiers(@NotNull AttributeMap attributeMap) {
-        super.removeAttributeModifiers(attributeMap);
-        AttributeInstance instance = attributeMap.getInstance(Attributes.MOVEMENT_SPEED);
-        if (instance != null) {
-            instance.getModifiers().stream()
-                    .map(AttributeModifier::id)
-                    .filter(id -> id.getPath().equals(attributeModifierName))
-                    .forEach(instance::removeModifier);
-        }
-    }
-
-    @Override
-    public ParticleOptions createParticleOptions(MobEffectInstance effect) {
-        return ModParticles.NONE_PARTICLES.get();
+    public void removeAttributeModifiers(LivingEntity pLivingEntity, AttributeMap pAttributeMap, int pAmplifier) {
+        super.removeAttributeModifiers(pLivingEntity, pAttributeMap, pAmplifier);
+        AttributeModifierUtil.removeModifier(
+                pLivingEntity,
+                Attributes.MOVEMENT_SPEED,
+                attributeModifierName);
     }
 
     public static class StunPlayerData {

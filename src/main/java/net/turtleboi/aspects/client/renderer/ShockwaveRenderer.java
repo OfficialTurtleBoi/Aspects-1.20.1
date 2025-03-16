@@ -1,11 +1,7 @@
 package net.turtleboi.aspects.client.renderer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -14,12 +10,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.turtleboi.aspects.client.renderer.util.ParticleSpawnQueue;
-import net.turtleboi.aspects.network.payloads.ParticleData;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import net.turtleboi.aspects.network.ModNetworking;
+import net.turtleboi.aspects.network.packets.SendParticlesS2C;
 
 public class ShockwaveRenderer {
     private final long startTime;
@@ -67,11 +59,12 @@ public class ShockwaveRenderer {
                         long delayTicks = (long)(distance);
                         long delayMillis = delayTicks * 50;
 
-                        ParticleSpawnQueue.schedule(delayMillis, () -> ParticleData.spawnParticle(
-                                ParticleTypes.DUST_PLUME,
-                                spawnX, spawnY, spawnZ,
-                                velocityX, velocityY, velocityZ
-                        ));
+                        ParticleSpawnQueue.schedule(delayMillis, () ->
+                                ModNetworking.sendToNear(new SendParticlesS2C(
+                                        (ParticleOptions) ParticleTypes.DUST,
+                                        spawnX, spawnY, spawnZ,
+                                        velocityX, velocityY, velocityZ
+                                ), entity));
                     }
                 }
             }

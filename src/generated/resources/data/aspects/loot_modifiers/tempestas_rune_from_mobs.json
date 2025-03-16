@@ -2,8 +2,8 @@
   "type": "aspects:add_item",
   "conditions": [
     {
-      "condition": "neoforge:loot_table_id",
-      "loot_table_id": "minecraft:entities/breeze"
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:entities/creeper"
     },
     {
       "chance": 0.1,

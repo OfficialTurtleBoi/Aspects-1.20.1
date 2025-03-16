@@ -1,20 +1,18 @@
 package net.turtleboi.aspects.client.gui;
 
-import com.mojang.blaze3d.platform.Window;
-import net.minecraft.client.DeltaTracker;
+
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.client.IItemDecorator;
-import net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent;
+import net.minecraftforge.client.IItemDecorator;
 import net.turtleboi.aspects.Aspects;
 import net.turtleboi.aspects.util.AspectUtil;
 
 public class AspectItemDecorator implements IItemDecorator {
 
     private static ResourceLocation getAspectOverlay(ItemStack itemStack) {
-        return ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "textures/gui/" + AspectUtil.getAspect(itemStack) + "_overlay.png");
+        return new ResourceLocation(Aspects.MOD_ID, "textures/gui/" + AspectUtil.getAspect(itemStack) + "_overlay.png");
     }
 
     @Override

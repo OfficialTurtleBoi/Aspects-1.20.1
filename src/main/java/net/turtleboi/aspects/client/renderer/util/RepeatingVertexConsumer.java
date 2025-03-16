@@ -1,7 +1,6 @@
 package net.turtleboi.aspects.client.renderer.util;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import org.joml.Matrix4f;
 
 public class RepeatingVertexConsumer implements VertexConsumer {
     private final VertexConsumer delegate;
@@ -15,44 +14,53 @@ public class RepeatingVertexConsumer implements VertexConsumer {
     }
 
     @Override
-    public VertexConsumer addVertex(float x, float y, float z) {
-        delegate.addVertex(x, y, z);
+    public VertexConsumer vertex(double pX, double pY, double pZ) {
+        delegate.vertex(pX, pY, pZ);
         return this;
     }
 
     @Override
-    public VertexConsumer setColor(int red, int green, int blue, int alpha) {
-        delegate.setColor(red, green, blue, alpha);
+    public VertexConsumer color(int pRed, int pGreen, int pBlue, int pAlpha) {
+        delegate.color(pRed, pGreen, pBlue, pAlpha);
         return this;
     }
 
     @Override
-    public VertexConsumer setUv(float u, float v) {
-        delegate.setUv(u * uScale, v * vScale);
+    public VertexConsumer uv(float pU, float pV) {
+        delegate.uv(pU * uScale, pV * vScale);
         return this;
     }
 
     @Override
-    public VertexConsumer setOverlay(int packedOverlay) {
-        delegate.setOverlay(packedOverlay);
+    public VertexConsumer overlayCoords(int pU, int pV) {
+        delegate.overlayCoords(pU, pV);
         return this;
     }
 
     @Override
-    public VertexConsumer setUv1(int u, int v) {
-        delegate.setUv1(u, v);
+    public VertexConsumer uv2(int pU, int pV) {
+        delegate.uv2(pU, pV);
         return this;
     }
 
     @Override
-    public VertexConsumer setUv2(int u, int v) {
-        delegate.setUv2(u, v);
+    public VertexConsumer normal(float pX, float pY, float pZ) {
+        delegate.normal(pX, pY, pZ);
         return this;
     }
 
     @Override
-    public VertexConsumer setNormal(float x, float y, float z) {
-        delegate.setNormal(x, y, z);
-        return this;
+    public void endVertex() {
+        delegate.endVertex();
+    }
+
+    @Override
+    public void defaultColor(int pDefaultR, int pDefaultG, int pDefaultB, int pDefaultA) {
+        delegate.defaultColor(pDefaultR, pDefaultG, pDefaultB, pDefaultA);
+    }
+
+    @Override
+    public void unsetDefaultColor() {
+        delegate.unsetDefaultColor();
     }
 }

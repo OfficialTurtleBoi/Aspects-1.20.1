@@ -3,15 +3,16 @@ package net.turtleboi.aspects.particle;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.turtleboi.aspects.Aspects;
 
 import java.util.function.Supplier;
 
 public class ModParticles {
     public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES =
-            DeferredRegister.create(BuiltInRegistries.PARTICLE_TYPE, Aspects.MOD_ID);
+            DeferredRegister.create(ForgeRegistries.PARTICLE_TYPES, Aspects.MOD_ID);
 
     public static final Supplier<SimpleParticleType> NONE_PARTICLES =
             PARTICLE_TYPES.register("none_particles", () -> new SimpleParticleType(true));

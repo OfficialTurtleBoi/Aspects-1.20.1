@@ -1,20 +1,18 @@
-package net.turtleboi.aspects.effect;
+package net.turtleboi.aspects.effect.custom;
 
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.turtleboi.aspects.network.payloads.FrozenData;
+import net.turtleboi.aspects.effect.ModEffects;
+import net.turtleboi.aspects.network.ModNetworking;
+import net.turtleboi.aspects.network.packets.FrozenDataS2C;
 import net.turtleboi.aspects.util.AttributeModifierUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,15 +27,15 @@ public class FrozenEffect extends MobEffect {
     }
 
     @Override
-    public boolean applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
-        FrozenData.setFrozen(pLivingEntity, true);
+    public void applyEffectTick(LivingEntity pLivingEntity, int pAmplifier) {
+        ModNetworking.sendToAllPlayers(new FrozenDataS2C(pLivingEntity.getId(), true));
 
         if (!pLivingEntity.level().isClientSide()) {
-            if(pLivingEntity.hasEffect(ModEffects.CHILLED)){
-                pLivingEntity.removeEffect(ModEffects.CHILLED);
+            if(pLivingEntity.hasEffect(ModEffects.CHILLED.get())){
+                pLivingEntity.removeEffect(ModEffects.CHILLED.get());
             }
 
-            int duration = Objects.requireNonNull(pLivingEntity.getEffect(ModEffects.FROZEN)).getDuration();
+            int duration = Objects.requireNonNull(pLivingEntity.getEffect(ModEffects.FROZEN.get())).getDuration();
             if (!pLivingEntity.level().isClientSide() && duration > 2) {
                 //System.out.println("Freezing: " + pLivingEntity);
                 //System.out.println("Duration: " + duration);
@@ -71,7 +69,7 @@ public class FrozenEffect extends MobEffect {
                             Attributes.MOVEMENT_SPEED,
                             attributeModifierName,
                             -1,
-                            AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+                            AttributeModifier.Operation.MULTIPLY_TOTAL);
 
                 } else if (pLivingEntity instanceof Mob mob) {
                     Vec3 newVelocity = new Vec3(0, 0, 0);
@@ -82,44 +80,38 @@ public class FrozenEffect extends MobEffect {
                     mob.setJumping(false);
                     mob.getNavigation().stop();
                 }
-            } else if (duration <= 2){
-                //System.out.println("Unstunning: " + pLivingEntity);
-                if (pLivingEntity instanceof Player player) {
-                    frozenPlayers.remove(player.getUUID());
-                    player.getAbilities().mayBuild = true;
-                    if (player.isCreative()) {
-                        player.getAbilities().invulnerable = true;
-                    }
-                    player.hurtMarked = true;
-                } else if (pLivingEntity instanceof Mob mob) {
-                    mob.setNoAi(false);
-                    mob.hurtMarked = true;
-                }
             }
         }
-        return super.applyEffectTick(pLivingEntity, pAmplifier);
+        super.applyEffectTick(pLivingEntity, pAmplifier);
     }
 
     @Override
-    public boolean shouldApplyEffectTickThisTick(int pDuration, int pAmplifier) {
+    public boolean isDurationEffectTick(int pDuration, int pAmplifier) {
         return true;
     }
 
     @Override
-    public void onMobRemoved(LivingEntity livingEntity, int amplifier, Entity.RemovalReason reason) {
-        super.onMobRemoved(livingEntity, amplifier, reason);
-        FrozenData.setFrozen(livingEntity, false);
+    public void removeAttributeModifiers(LivingEntity pLivingEntity, AttributeMap pAttributeMap, int pAmplifier) {
+        super.removeAttributeModifiers(pLivingEntity, pAttributeMap, pAmplifier);
+        ModNetworking.sendToAllPlayers(new FrozenDataS2C(pLivingEntity.getId(), false));
+        removeEntityFreeze(pLivingEntity);
+        AttributeModifierUtil.removeModifier(
+                pLivingEntity,
+                Attributes.MOVEMENT_SPEED,
+                attributeModifierName);
     }
 
-    @Override
-    public void removeAttributeModifiers(@NotNull AttributeMap attributeMap) {
-        super.removeAttributeModifiers(attributeMap);
-        AttributeInstance instance = attributeMap.getInstance(Attributes.MOVEMENT_SPEED);
-        if (instance != null) {
-            instance.getModifiers().stream()
-                    .map(AttributeModifier::id)
-                    .filter(id -> id.getPath().equals(attributeModifierName))
-                    .forEach(instance::removeModifier);
+    public static void removeEntityFreeze(LivingEntity pLivingEntity) {
+        if (pLivingEntity instanceof Player player) {
+            frozenPlayers.remove(player.getUUID());
+            player.getAbilities().mayBuild = true;
+            if (player.isCreative()) {
+                player.getAbilities().invulnerable = true;
+            }
+            player.hurtMarked = true;
+        } else if (pLivingEntity instanceof Mob mob) {
+            mob.setNoAi(false);
+            mob.hurtMarked = true;
         }
     }
 

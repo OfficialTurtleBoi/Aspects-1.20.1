@@ -11,7 +11,7 @@ import net.turtleboi.aspects.Aspects;
 public class ModTags {
     public static class Blocks {
         private static TagKey<Block> createTag(String name){
-            return BlockTags.create(ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, name));
+            return BlockTags.create(new ResourceLocation(Aspects.MOD_ID, name));
         }
     }
 
@@ -19,7 +19,7 @@ public class ModTags {
         public static final TagKey<Item> RUNE_ITEMS = createTag("rune_items");
 
         private static TagKey<Item> createTag(String name){
-            return ItemTags.create(ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, name));
+            return ItemTags.create(new ResourceLocation(Aspects.MOD_ID, name));
         }
     }
 }

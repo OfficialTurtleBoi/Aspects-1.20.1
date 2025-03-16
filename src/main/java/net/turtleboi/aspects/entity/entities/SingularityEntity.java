@@ -1,7 +1,6 @@
 package net.turtleboi.aspects.entity.entities;
 
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -9,7 +8,6 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerEntity;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -18,12 +16,9 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.turtleboi.aspects.network.payloads.ParticleData;
 import net.turtleboi.aspects.util.ModAttributes;
-import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -42,8 +37,8 @@ public class SingularityEntity extends Entity {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(TEXTURE_INDEX, 0);
+    protected void defineSynchedData() {
+        this.entityData.define(TEXTURE_INDEX, 0);
     }
 
     @Override
@@ -100,8 +95,8 @@ public class SingularityEntity extends Entity {
                     stunningPlayer = null;
                 }
 
-                if (stunningPlayer != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT) != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT).getValue() > 0) {
-                    double umbreAmplifier = stunningPlayer.getAttributeValue(ModAttributes.UMBRE_ASPECT);
+                if (stunningPlayer != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT.get()) != null && stunningPlayer.getAttribute(ModAttributes.UMBRE_ASPECT.get()).getValue() > 0) {
+                    double umbreAmplifier = stunningPlayer.getAttributeValue(ModAttributes.UMBRE_ASPECT.get());
 
                     int randomInt = level().random.nextInt(100);
                     if (randomInt < (50 * (1 + (umbreAmplifier / 4)))) {
@@ -223,7 +218,7 @@ public class SingularityEntity extends Entity {
     }
 
     @Override
-    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket(@NotNull ServerEntity entity) {
-        return new ClientboundAddEntityPacket(this, entity);
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+        return new ClientboundAddEntityPacket(this);
     }
 }

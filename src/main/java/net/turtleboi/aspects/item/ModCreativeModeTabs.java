@@ -4,10 +4,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
 import net.turtleboi.aspects.Aspects;
-import net.turtleboi.aspects.block.ModBlocks;
 
 import java.util.function.Supplier;
 
@@ -19,12 +18,12 @@ public class ModCreativeModeTabs {
             () -> CreativeModeTab.builder().icon(() -> new ItemStack(ModItems.INFERNUM_RUNE.get()))
                     .title(Component.translatable("creativetab.aspects.aspects_tab"))
                     .displayItems((itemDisplayParameters, output) -> {
-                        output.accept(ModItems.INFERNUM_RUNE);
-                        output.accept(ModItems.GLACIUS_RUNE);
-                        output.accept(ModItems.TERRA_RUNE);
-                        output.accept(ModItems.TEMPESTAS_RUNE);
-                        output.accept(ModItems.ARCANI_RUNE);
-                        output.accept(ModItems.UMBRE_RUNE);
+                        output.accept(ModItems.INFERNUM_RUNE.get());
+                        output.accept(ModItems.GLACIUS_RUNE.get());
+                        output.accept(ModItems.TERRA_RUNE.get());
+                        output.accept(ModItems.TEMPESTAS_RUNE.get());
+                        output.accept(ModItems.ARCANI_RUNE.get());
+                        output.accept(ModItems.UMBRE_RUNE.get());
 
                         //output.accept(ModBlocks.RUNE_BLOCK);
                     }).build());

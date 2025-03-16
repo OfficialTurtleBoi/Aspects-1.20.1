@@ -1,11 +1,11 @@
 package net.turtleboi.aspects.datagen;
 
 import net.minecraft.data.PackOutput;
-import net.neoforged.neoforge.client.model.generators.BlockStateProvider;
-import net.neoforged.neoforge.common.data.ExistingFileHelper;
-import net.neoforged.neoforge.registries.DeferredBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraftforge.client.model.generators.BlockStateProvider;
+import net.minecraftforge.common.data.ExistingFileHelper;
+import net.minecraftforge.registries.RegistryObject;
 import net.turtleboi.aspects.Aspects;
-import net.turtleboi.aspects.block.ModBlocks;
 
 public class ModBlockStateProvider extends BlockStateProvider {
     public ModBlockStateProvider(PackOutput output, ExistingFileHelper exFileHelper) {
@@ -17,7 +17,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
         //blockWithItem(ModBlocks.RUNE_BLOCK);
     }
 
-    private void blockWithItem(DeferredBlock<?> deferredBlock){
-        simpleBlockWithItem(deferredBlock.get(), cubeAll(deferredBlock.get()));
+    private void blockWithItem(RegistryObject<Block> blockRegistryObject) {
+        simpleBlockWithItem(blockRegistryObject.get(), cubeAll(blockRegistryObject.get()));
     }
 }

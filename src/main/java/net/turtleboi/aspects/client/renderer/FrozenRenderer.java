@@ -12,11 +12,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.turtleboi.aspects.client.data.FrozenStatusCache;
 import net.turtleboi.aspects.client.renderer.util.RepeatingVertexConsumer;
-import net.turtleboi.aspects.network.payloads.FrozenData;
 import org.jetbrains.annotations.NotNull;
 
 public class FrozenRenderer {
-    private static final ResourceLocation FROZEN_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/block/blue_ice.png");
+    private static final ResourceLocation FROZEN_TEXTURE = new ResourceLocation("minecraft", "textures/block/blue_ice.png");
 
     public static class FrozenLayer<T extends LivingEntity, M extends EntityModel<T>> extends RenderLayer<T,M> {
         private final LivingEntityRenderer<T, M> frozenRenderer;
@@ -29,17 +28,18 @@ public class FrozenRenderer {
         @Override
         public void render(@NotNull PoseStack pPostStack, @NotNull MultiBufferSource pBuffer, int pPackedLight, LivingEntity pLivingEntity, float pLimbSwing,
                            float pLimbSwingAmount, float pPartialTicks, float pAgeInTicks, float pNetHeadYaw, float pHeadPitch) {
-            if (FrozenStatusCache.isFrozen(pLivingEntity.getId())) {
-                FrozenData.sendFrozenSync(pLivingEntity);
-                EntityModel<T> model = this.frozenRenderer.getModel();
-                VertexConsumer originalConsumer = pBuffer.getBuffer(RenderType.entityTranslucent(FROZEN_TEXTURE));
-                int originalColor = 0xFFFFFFFF;
-                int alpha = (originalColor >> 24) & 0xFF;
-                int halfAlpha = alpha / 2;
-                int newColor = (halfAlpha << 24) | (originalColor & 0x00FFFFFF);
-                VertexConsumer repeatingConsumer = new RepeatingVertexConsumer(originalConsumer, 8, 8);
-                model.renderToBuffer(pPostStack, repeatingConsumer, pPackedLight, OverlayTexture.NO_OVERLAY, newColor);
+            if (!FrozenStatusCache.isFrozen(pLivingEntity.getId())) {
+                return;
             }
+
+            //System.out.println("Rendering FrozenLayer for entity: " + pLivingEntity.getId());
+
+            pPostStack.pushPose();
+            EntityModel<T> model = this.frozenRenderer.getModel();
+            VertexConsumer originalConsumer = pBuffer.getBuffer(RenderType.entityTranslucent(FROZEN_TEXTURE));
+            VertexConsumer repeatingConsumer = new RepeatingVertexConsumer(originalConsumer, 8, 8);
+            model.renderToBuffer(pPostStack, repeatingConsumer, pPackedLight, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 0.5f);
+            pPostStack.popPose();
         }
     }
 }

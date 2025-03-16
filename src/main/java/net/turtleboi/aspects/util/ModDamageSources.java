@@ -12,7 +12,7 @@ import net.turtleboi.aspects.Aspects;
 import org.jetbrains.annotations.Nullable;
 
 public class ModDamageSources {
-    public static final ResourceLocation FROZEN_DAMAGE_ID = ResourceLocation.fromNamespaceAndPath(Aspects.MOD_ID, "frozen");
+    public static final ResourceLocation FROZEN_DAMAGE_ID = new ResourceLocation(Aspects.MOD_ID, "frozen");
 
     public static DamageSource frozenDamage(Level level, @Nullable Entity attacker, @Nullable Entity directCause) {
         Holder<DamageType> holder = frozenDamageType(level);
