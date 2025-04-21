@@ -2,6 +2,7 @@ package net.turtleboi.aspects.client.renderer;
 
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -9,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.turtleboi.aspects.Aspects;
+import net.turtleboi.turtlecore.client.renderer.FireCircleRenderer;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
@@ -22,8 +24,6 @@ public class FireAuraRenderer {
     private final long spawnTime;
     private final int totalAnimationTime;
     private final double amplifier;
-    public static final ResourceLocation FIRE_AURA_TEXTURE = new ResourceLocation(Aspects.MOD_ID, "textures/gui/fire_aura.png");
-    public static final ResourceLocation ULTRA_AURA_TEXTURE = new ResourceLocation(Aspects.MOD_ID, "textures/gui/ultra_fire_aura.png");
 
     public static final Map<UUID, List<FireAuraRenderer>> ENTITY_AURAS = new ConcurrentHashMap<>();
 
@@ -39,7 +39,7 @@ public class FireAuraRenderer {
         auraList.add(new FireAuraRenderer(currentTime, totalAnimationTime, amplifier));
     }
 
-    public static void renderAuras(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
+    public static void renderAuras(MultiBufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
         UUID uuid = livingEntity.getUUID();
         List<FireAuraRenderer> auraList = ENTITY_AURAS.get(uuid);
         if (auraList != null) {
@@ -51,7 +51,7 @@ public class FireAuraRenderer {
         }
     }
 
-    public void renderAura(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
+    public void renderAura(MultiBufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
         poseStack.pushPose();
         float ticksElapsed = (System.currentTimeMillis() % spawnTime) / 50.0f;
         float tickCount = ticksElapsed + partialTicks;
@@ -91,41 +91,12 @@ public class FireAuraRenderer {
         poseStack.mulPose(Axis.XP.rotationDegrees(-90));
         poseStack.scale(scale, scale, scale);
 
-        ResourceLocation texture;
-        if (amplifier > 3){
-            texture = ULTRA_AURA_TEXTURE;
-        } else {
-            texture = FIRE_AURA_TEXTURE;
-        }
-
-        VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entityTranslucentCull(texture));
-        PoseStack.Pose pose = poseStack.last();
-        Matrix4f matrix = pose.pose();
-        Matrix3f normalMatrix = pose.normal();
-
-        vertex(vertexConsumer, matrix, normalMatrix, -6, -6, 0, 0, 0, 255, 255, 255, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, 6, -6, 0, 1, 0, 255, 255, 255, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, 6, 6, 0, 1, 1, 255, 255, 255, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, -6, 6, 0, 0, 1, 255, 255, 255, vertexAlpha);
-
-        vertex(vertexConsumer, matrix, normalMatrix, -6, 6, 0, 0, 1, 255, 255, 255, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, 6, 6, 0, 1, 1, 255, 255, 255, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, 6, -6, 0, 1, 0, 255, 255, 255, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, -6, -6, 0, 0, 0, 255, 255, 255, vertexAlpha);
+        FireCircleRenderer.renderFireCircle(bufferSource, poseStack, vertexAlpha, amplifier > 3, false);
 
         poseStack.popPose();
     }
 
-    private static void vertex(VertexConsumer vertexConsumer, Matrix4f matrix, Matrix3f normalMatrix,
-                               int x, int y, int z, float u, float v, int red, int green, int blue, int vertexAlpha) {
-        vertexConsumer.vertex(matrix, (float)x, (float)y, (float)z)
-                .color(red, green, blue, vertexAlpha)
-                .uv(u, v)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(240)
-                .normal(normalMatrix,0, 0, 1)
-                .endVertex();
-    }
+
 
     public boolean isExpired() {
         return (System.currentTimeMillis() - spawnTime) > (totalAnimationTime * 50L);

@@ -81,7 +81,7 @@ public class SingularityRenderer extends EntityRenderer<SingularityEntity> {
                 .color(red, green, blue, vertexAlpha)
                 .uv(u, v)
                 .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(240)
+                .uv2(LightTexture.FULL_BRIGHT)
                 .normal(normalMatrix,0, 0, 1)
                 .endVertex();;
     }

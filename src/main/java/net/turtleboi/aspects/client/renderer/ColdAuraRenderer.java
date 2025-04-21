@@ -1,16 +1,12 @@
 package net.turtleboi.aspects.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.turtleboi.aspects.Aspects;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
+import net.turtleboi.turtlecore.TurtleCore;
+import net.turtleboi.turtlecore.client.data.SpikeData;
+import net.turtleboi.turtlecore.client.renderer.IceSpikeRenderer;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,48 +15,34 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ColdAuraRenderer {
     private final long spawnTime;
     private final int totalAnimationTime;
-    private final double amplifier;
+    private final int amplifier;
 
     public static final Map<UUID, List<ColdAuraRenderer>> ENTITY_AURAS = new ConcurrentHashMap<>();
     private final SpikeData[] spikesSequence;
 
-    public ColdAuraRenderer(long currentTime, int totalAnimationTime, double amplifier) {
+    public ColdAuraRenderer(long currentTime, int totalAnimationTime, int amplifier) {
         this.spawnTime = currentTime;
         this.totalAnimationTime = totalAnimationTime;
         this.amplifier = amplifier;
 
         Random random = new Random();
-        List<SpikeData> list = new ArrayList<>();
-        list.add(new SpikeData(5, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike1.png"), random));
-        list.add(new SpikeData(8, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike2.png"), random));
-        list.add(new SpikeData(8, 14, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike3.png"), random));
-        list.add(new SpikeData(6, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike4.png"), random));
-        list.add(new SpikeData(6, 19, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike5.png"), random));
-        list.add(new SpikeData(8, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike6.png"), random));
-        list.add(new SpikeData(5, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike1.png"), random));
-        list.add(new SpikeData(8, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike2.png"), random));
-        list.add(new SpikeData(8, 14, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike3.png"), random));
-        list.add(new SpikeData(6, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike4.png"), random));
-        list.add(new SpikeData(6, 19, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike5.png"), random));
-        list.add(new SpikeData(8, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike6.png"), random));
-        list.add(new SpikeData(5, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike1.png"), random));
-        list.add(new SpikeData(8, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike2.png"), random));
-        list.add(new SpikeData(8, 14, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike3.png"), random));
-        list.add(new SpikeData(6, 11, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike4.png"), random));
-        list.add(new SpikeData(6, 19, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike5.png"), random));
-        list.add(new SpikeData(8, 8, new ResourceLocation(Aspects.MOD_ID, "textures/gui/spike6.png"), random));
+        SpikeData[] subset = SpikeData.getPremadeSpikesByIds(random, 1, 2, 3, 4, 5, 6);
+        List<SpikeData> pool = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            pool.addAll(Arrays.asList(subset));
+        }
 
-        Collections.shuffle(list, random);
-        spikesSequence = list.toArray(new SpikeData[0]);
+        Collections.shuffle(pool, random);
+        spikesSequence = pool.toArray(new SpikeData[0]);
     }
 
-    public static void addAuraForEntity(LivingEntity livingEntity, long currentTime, int totalAnimationTime, double amplifier) {
+    public static void addAuraForEntity(LivingEntity livingEntity, long currentTime, int totalAnimationTime, int amplifier) {
         UUID uuid = livingEntity.getUUID();
         List<ColdAuraRenderer> cubeList = ENTITY_AURAS.computeIfAbsent(uuid, key -> new CopyOnWriteArrayList<>());
         cubeList.add(new ColdAuraRenderer(currentTime, totalAnimationTime, amplifier));
     }
 
-    public static void renderAuras(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
+    public static void renderAuras(MultiBufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
         UUID uuid = livingEntity.getUUID();
         List<ColdAuraRenderer> spikeList = ENTITY_AURAS.get(uuid);
         if (spikeList != null) {
@@ -71,7 +53,7 @@ public class ColdAuraRenderer {
         }
     }
 
-    public void renderIceSpikes(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
+    public void renderIceSpikes(MultiBufferSource bufferSource, PoseStack poseStack, LivingEntity livingEntity, float partialTicks) {
         poseStack.pushPose();
         float ticksElapsed = (System.currentTimeMillis() - spawnTime) / 50.0f;
         float tickCount = ticksElapsed + partialTicks;
@@ -102,7 +84,7 @@ public class ColdAuraRenderer {
         poseStack.mulPose(Axis.YP.rotationDegrees(-livingEntity.getYRot()));
         poseStack.mulPose(Axis.XP.rotationDegrees(-90));
 
-        int spikeCount = (int) (4 + amplifier);
+        int spikeCount = 4 + amplifier;
         for (int i = 0; i < spikeCount; i++) {
             SpikeData spike = spikesSequence[i % spikesSequence.length];
             float zTranslation = 10 * ((spike.zTranslationOffset * livingEntity.getBbHeight()) - (livingEntity.getBbHeight() * 0.375f));
@@ -113,72 +95,13 @@ public class ColdAuraRenderer {
             float zAngle = spike.zAngleOffset;
 
             zAngle = baseAngle + zAngle;
-            renderSpike(poseStack, bufferSource, spike, zTranslation, xAngle, yAngle, zAngle, vertexAlpha);
+            IceSpikeRenderer.renderSpike(poseStack, bufferSource, spike, amplifier, zTranslation, xAngle, yAngle, zAngle, vertexAlpha);
         }
 
         poseStack.popPose();
-    }
-
-    private void renderSpike(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, SpikeData spike, float zTranslation, float xAngle, float yAngle, float zAngle, int vertexAlpha) {
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucentCull(spike.texture));
-        poseStack.pushPose();
-        poseStack.translate(0, 0, zTranslation);
-        poseStack.scale(1, 1, (float) (1 * (amplifier / 4)));
-        poseStack.mulPose(Axis.XP.rotationDegrees(xAngle));
-        poseStack.mulPose(Axis.YP.rotationDegrees(yAngle));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(zAngle));
-        renderSpikeQuad(poseStack, consumer, spike.width, spike.height, vertexAlpha);
-        poseStack.popPose();
-    }
-
-    private void renderSpikeQuad(PoseStack postStack, VertexConsumer vertexConsumer, float width, float height, int vertexAlpha) {
-        PoseStack.Pose pose = postStack.last();
-        Matrix4f matrix = pose.pose();
-        Matrix3f normalMatrix = pose.normal();
-        float halfWidth = width / 2.0f;
-        vertex(vertexConsumer, matrix, normalMatrix, -halfWidth, 0, 0, 0, 0, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, halfWidth, 0, 0, 1, 0, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, halfWidth, height, 0, 1, 1, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, -halfWidth, height, 0, 0, 1, vertexAlpha);
-
-        vertex(vertexConsumer, matrix, normalMatrix, -halfWidth, height, 0, 0, 1, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, halfWidth, height, 0, 1, 1, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, halfWidth, 0, 0, 1, 0, vertexAlpha);
-        vertex(vertexConsumer, matrix, normalMatrix, -halfWidth, 0, 0, 0, 0, vertexAlpha);
-    }
-
-    private static void vertex(VertexConsumer vertexConsumer, Matrix4f matrix, Matrix3f normalMatrix,
-                               float x, float y, float z, float u, float v, int vertexAlpha) {
-        vertexConsumer.vertex(matrix, x, y, z)
-                .color(255, 255, 255, vertexAlpha)
-                .uv(u, v)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(240)
-                .normal(normalMatrix,0, 0, 1)
-                .endVertex();
     }
 
     public boolean isExpired() {
         return (System.currentTimeMillis() - spawnTime) > (totalAnimationTime * 50L);
-    }
-
-    private static class SpikeData {
-        final float width;
-        final float height;
-        final ResourceLocation texture;
-        final float zTranslationOffset;
-        final float xAngleOffset;
-        final float yAngleOffset;
-        final float zAngleOffset;
-
-        SpikeData(float width, float height, ResourceLocation texture, Random random) {
-            this.width = width;
-            this.height = height;
-            this.texture = texture;
-            this.zTranslationOffset = random.nextFloat();
-            this.xAngleOffset = (random.nextFloat() * 60F) - 30F;
-            this.yAngleOffset = (random.nextFloat() * 10F) - 5F;
-            this.zAngleOffset = (random.nextFloat() * 30F) - 15F;
-        }
     }
 }

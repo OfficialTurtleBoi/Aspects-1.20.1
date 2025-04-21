@@ -9,9 +9,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.turtleboi.aspects.client.renderer.util.ParticleSpawnQueue;
-import net.turtleboi.aspects.network.ModNetworking;
-import net.turtleboi.aspects.network.packets.SendParticlesS2C;
+import net.turtleboi.turtlecore.client.util.ParticleSpawnQueue;
+import net.turtleboi.turtlecore.network.CoreNetworking;
+import net.turtleboi.turtlecore.network.packet.util.SendParticlesS2C;
 
 public class ShockwaveRenderer {
     private final long startTime;
@@ -60,7 +60,7 @@ public class ShockwaveRenderer {
                         long delayMillis = delayTicks * 50;
 
                         ParticleSpawnQueue.schedule(delayMillis, () ->
-                                ModNetworking.sendToNear(new SendParticlesS2C(
+                                CoreNetworking.sendToNear(new SendParticlesS2C(
                                         (ParticleOptions) ParticleTypes.DUST,
                                         spawnX, spawnY, spawnZ,
                                         velocityX, velocityY, velocityZ

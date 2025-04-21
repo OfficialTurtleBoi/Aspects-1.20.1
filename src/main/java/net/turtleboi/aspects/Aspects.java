@@ -15,15 +15,10 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.turtleboi.aspects.block.ModBlockEntities;
 import net.turtleboi.aspects.block.ModBlocks;
 import net.turtleboi.aspects.client.renderer.SingularityRenderer;
-import net.turtleboi.aspects.effect.ModEffects;
 import net.turtleboi.aspects.entity.ModEntities;
 import net.turtleboi.aspects.item.ModCreativeModeTabs;
 import net.turtleboi.aspects.item.ModItems;
 import net.turtleboi.aspects.loot.ModLootModifiers;
-import net.turtleboi.aspects.network.ModNetworking;
-import net.turtleboi.aspects.particle.ChilledParticles;
-import net.turtleboi.aspects.particle.ModParticles;
-import net.turtleboi.aspects.particle.StunnedParticles;
 import net.turtleboi.aspects.util.ModAttributes;
 import org.slf4j.Logger;
 
@@ -36,11 +31,9 @@ public class Aspects {
 
     public Aspects() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        ModParticles.register(modEventBus);
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
-        ModEffects.register(modEventBus);
         ModEntities.register(modEventBus);
         ModBlockEntities.register(modEventBus);
         ModLootModifiers.register(modEventBus);
@@ -54,7 +47,6 @@ public class Aspects {
         event.enqueueWork(() -> {
 
                 });
-        ModNetworking.register();
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
@@ -75,9 +67,7 @@ public class Aspects {
 
         @SubscribeEvent
         public static void registerParticleFactories(RegisterParticleProvidersEvent event){
-            event.registerSpriteSet(ModParticles.NONE_PARTICLES.get(), StunnedParticles.Provider::new);
-            event.registerSpriteSet(ModParticles.CHILLED_PARTICLES.get(), ChilledParticles.Provider::new);
-            event.registerSpriteSet(ModParticles.STUNNED_PARTICLES.get(), StunnedParticles.Provider::new);
+
         }
     }
 }
